@@ -269,24 +269,31 @@
 
         // 🔄 [핵심 수정] 변경사항이 시트에 성공적으로 완벽 반영되었을 때만 renderFavorites()를 다시 호출하여 확실하게 동기화시킵니다.
         function saveFavoritesToGoogle() {
-            setSyncStatus("loading", "⏳ 구글 시트에 변경사항 저장 중...");
-            
-            fetch(GOOGLE_WEB_APP_URL, {
-                method: "POST",
-                body: JSON.stringify({ action: "save", favorites: favorites })
-            })
-            .then(res => res.json())
-            .then(resData => {
-                if(resData.status === "success") {
-                    setSyncStatus("success", "🟢 구글 스프레드시트에 저장 완료");
-                    renderFavorites(); // 💡 구글 시트 저장이 완벽하게 완료된 응답을 받으면 즉시 화면 리스트 동기화!!
-                }
-            })
-            .catch(err => {
-                console.error("구글 저장 에러:", err);
-                setSyncStatus("error", "❌ 구글 저장 실패");
-            });
+    setSyncStatus("loading", "⏳ 구글 시트에 변경사항 저장 중...");
+    
+    // 사용자가 처리 도중 또 버튼을 누르지 못하도록 상태값을 임시 반영하여 화면을 먼저 갱신
+    renderFavorites(); 
+
+    fetch(GOOGLE_WEB_APP_URL, {
+        method: "POST",
+        headers: {
+            "Content-Type": "text/plain;charset=utf-8" // 인코딩 깨짐 및 통신 꼬임 방지
+        },
+        body: JSON.stringify({ action: "save", favorites: favorites })
+    })
+    .then(res => res.json())
+    .then(resData => {
+        if(resData.status === "success") {
+            setSyncStatus("success", "🟢 구글 스프레드시트에 저장 완료");
+            // 확실하게 서버 저장이 끝난 시점에 최종 개수 한 번 더 검증 동기화
+            document.getElementById('favCount').innerText = favorites.length;
         }
+    })
+    .catch(err => {
+        console.error("구글 저장 에러:", err);
+        setSyncStatus("error", "❌ 구글 저장 실패 (네트워크 확인)");
+    });
+}
 
         function setSyncStatus(type, text) {
             const statusBox = document.getElementById('syncStatus');
