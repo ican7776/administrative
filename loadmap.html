@@ -34,13 +34,24 @@
             margin: 0 auto;
         }
 
+        /* 📌 상단 고정 영역 컨테이너 */
+        .sticky-top-container {
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            background-color: var(--bg);
+            padding-top: 20px;
+            margin-top: -20px;
+            padding-bottom: 5px;
+        }
+
         header {
             background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
             color: white;
             padding: 30px;
             border-radius: 16px;
             box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-            margin-bottom: 25px;
+            margin-bottom: 20px;
         }
 
         header h1 {
@@ -142,10 +153,9 @@
             font-weight: 600;
         }
 
-        /* 2단 분할 본문 구조 레이아웃 */
         .phase-split-body {
             display: grid;
-            grid-template-columns: 1.2fr 1fr; /* 좌측 본문 대 우측 채팅창 비율 조정 */
+            grid-template-columns: 1.2fr 1fr;
             min-height: 380px;
         }
 
@@ -157,7 +167,6 @@
             justify-content: space-between;
         }
 
-        /* 체크박스 숫번 뒤로 밀기 스타일 */
         .task-list {
             list-style: none;
             margin-bottom: 15px;
@@ -176,7 +185,6 @@
             border-bottom: none;
         }
 
-        /* 숫번이 앞에 먼저 오도록 배치 */
         .task-num {
             font-size: 0.95rem;
             font-weight: bold;
@@ -213,7 +221,6 @@
             margin-top: 2px;
         }
 
-        /* 💬 우측 일체형 채팅창 레이아웃 */
         .phase-right-chat {
             padding: 20px;
             background-color: #f8fafc;
@@ -237,8 +244,8 @@
             border: 1px solid var(--border);
             border-radius: 8px;
             padding: 15px;
-            flex: 1;               /* 남은 세로공간 전부 차지 */
-            max-height: 320px;     /* 스크롤 발생 임계 높이 */
+            flex: 1;
+            max-height: 320px;
             overflow-y: auto;
             display: flex;
             flex-direction: column;
@@ -247,13 +254,11 @@
             box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
         }
 
-        /* 말풍선 및 삭제 영역 */
         .chat-bubble-wrapper {
             display: flex;
             flex-direction: column;
             align-items: flex-end;
             position: relative;
-            group: hover;
         }
 
         .chat-bubble-container {
@@ -264,7 +269,6 @@
             justify-content: flex-end;
         }
 
-        /* 삭제 버튼 (기본 숨김, 마우스 오버시 표시) */
         .chat-delete-btn {
             background: #ef4444;
             color: white;
@@ -296,7 +300,6 @@
             box-shadow: 0 1px 2px rgba(0,0,0,0.05);
         }
 
-        /* 첨부파일 스타일 */
         .chat-file-link {
             display: inline-flex;
             align-items: center;
@@ -322,7 +325,6 @@
             margin-right: 2px;
         }
 
-        /* 입력 & 파일 업로드 컨트롤 그룹 */
         .chat-input-group {
             display: flex;
             gap: 6px;
@@ -421,7 +423,6 @@
             z-index: 999;
         }
 
-        /* 반응형 모바일 모드 디자인 */
         @media (max-width: 850px) {
             .phase-split-body {
                 grid-template-columns: 1fr;
@@ -433,29 +434,36 @@
             body { padding: 10px; }
             header { padding: 20px; }
             .phase-header { flex-direction: column; align-items: flex-start; gap: 6px; }
+            .sticky-top-container {
+                padding-top: 10px;
+                margin-top: -10px;
+            }
         }
     </style>
 </head>
 <body>
 
-    <header>
-        <h1>🎓 중등 2급 영어교사 자격증 취득 맞춤 로드맵</h1>
-        <p>외국대학 회계학 학사 → 학점은행제(KYStudy) 영어영문학 48학점 → 교육대학원 양성과정 → 교원자격증</p>
-        <div class="user-info-box">
-            <span><strong>최종학력:</strong> 외국 4년제 대학 졸업 (회계학)</span>
-            <span><strong>이수목표:</strong> 학학 타전공 48학점 (수업 100%)</span>
-            <span><strong>소요기간:</strong> 약 3.5년~4년</span>
-        </div>
-    </header>
+    <!-- 📌 상단 고정 영역 (로드맵 헤더 + 진행률 카드) -->
+    <div class="sticky-top-container">
+        <header>
+            <h1>🎓 중등 2급 영어교사 자격증 취득 맞춤 로드맵</h1>
+            <p>외국대학 회계학 학사 → 학점은행제(KYStudy) 영어영문학 48학점 → 교육대학원 양성과정 → 교원자격증</p>
+            <div class="user-info-box">
+                <span><strong>최종학력:</strong> 외국 4년제 대학 졸업 (회계학)</span>
+                <span><strong>이수목표:</strong> 학학 타전공 48학점 (수업 100%)</span>
+                <span><strong>소요기간:</strong> 약 3.5년~4년</span>
+            </div>
+        </header>
 
-    <!-- 진행 상황 카운터 -->
-    <div class="progress-card">
-        <div class="progress-header">
-            <span> 전체 진행률</span>
-            <span id="progress-text">0% (0 / 18 완료)</span>
-        </div>
-        <div class="progress-bar-bg">
-            <div class="progress-bar-fill" id="progress-bar"></div>
+        <!-- 진행 상황 카운터 -->
+        <div class="progress-card">
+            <div class="progress-header">
+                <span> 전체 진행률</span>
+                <span id="progress-text">0% (0 / 18 완료)</span>
+            </div>
+            <div class="progress-bar-bg">
+                <div class="progress-bar-fill" id="progress-bar"></div>
+            </div>
         </div>
     </div>
 
@@ -470,7 +478,6 @@
         </div>
         
         <div class="phase-split-body">
-            <!-- 좌측 콘텐츠 영역 -->
             <div class="phase-left-content">
                 <ul class="task-list">
                     <li class="task-item">
@@ -513,7 +520,6 @@
                 </div>
             </div>
 
-            <!-- 우측 채팅형 대화창 -->
             <div class="phase-right-chat">
                 <div class="chat-title">💬 Phase 1 메모 대화창</div>
                 <div class="chat-container" id="chat-container-1"></div>
@@ -796,7 +802,6 @@
             showSaveIndicator();
         }
 
-        // 💬 새 텍스트 메시지 추가
         function addChatMessage(phaseNum) {
             const inputEl = document.getElementById(`chat-input-${phaseNum}`);
             const text = inputEl.value.trim();
@@ -809,7 +814,6 @@
             inputEl.value = '';
         }
 
-        // 📎 파일 첨부 처리 (Base64 변환하여 저장)
         function handleFileUpload(phaseNum) {
             const fileInput = document.getElementById(`file-${phaseNum}`);
             const file = fileInput.files[0];
@@ -826,12 +830,11 @@
                     time: timestamp
                 });
                 saveAndRenderChats(phaseNum);
-                fileInput.value = ''; // 입력 초기화
+                fileInput.value = '';
             };
             reader.readAsDataURL(file);
         }
 
-        // ❌ 특정 메시지 삭제 기능
         function deleteMessage(phaseNum, index) {
             if (confirm("이 메시지/파일을 삭제하시겠습니까?")) {
                 chatData[phaseNum].splice(index, 1);
@@ -845,7 +848,6 @@
             showSaveIndicator();
         }
 
-        // 💬 대화창 화면 렌더링
         function renderChats(phaseNum) {
             const container = document.getElementById(`chat-container-${phaseNum}`);
             container.innerHTML = '';
@@ -857,7 +859,6 @@
                 const bubbleContainer = document.createElement('div');
                 bubbleContainer.className = 'chat-bubble-container';
 
-                // 삭제 버튼 추가
                 const delBtn = document.createElement('button');
                 delBtn.className = 'chat-delete-btn';
                 delBtn.innerText = '✕';
