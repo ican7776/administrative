@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>전국 교원양성기관 통합 검색 & 즐겨찾기 (구글 연동형)</title>
+    <title>전국 교원양성기관 통합 검색 & 즐겨찾기 (실시간 연동형)</title>
     <!-- 엑셀 파일 직접 파싱용 라이브러리 -->
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
@@ -139,7 +139,7 @@
         .panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; padding-bottom: 0.5rem; border-bottom: 2px solid #f1f5f9; }
         .panel-title { font-weight: 700; font-size: 1rem; color: #0f172a; display: flex; align-items: center; gap: 6px; }
         
-        /* 구글 스프레드시트 실시간 연동태 알림창 */
+        /* 통신 상태 박스 */
         .sync-status-box { background: #f0fdf4; border: 1px solid #bbf7d0; padding: 0.6rem; border-radius: 6px; margin-bottom: 0.75rem; display: flex; align-items: center; gap: 6px; font-size: 0.78rem; color: #166534; font-weight: 600; }
         .sync-status-box.loading { background: #fffbeb; border: 1px solid #fef08a; color: #a16207; }
 
@@ -170,11 +170,10 @@
     </div>
 
     <div class="app-container">
-        <!-- 메인 검색 및 결과 테이블 영역 -->
+        <!-- 메인 콘텐츠 -->
         <main class="main-content">
             <div class="search-card">
                 <div class="search-grid">
-                    <!-- 필터 8종 -->
                     <div class="form-group"><label>지역(소재지)</label><div class="dropdown-btn" onclick="toggleDropdown('region', event)"><span class="btn-text" id="btn-text-region">전체 선택</span><span class="arrow">▼</span></div><div class="dropdown-menu" id="menu-region"><input type="text" class="dropdown-search-input" placeholder="직접 입력 검색..." oninput="filterDropdownItems('region', this.value)"><div class="dropdown-items-container" id="items-region"></div></div></div>
                     <div class="form-group"><label>대학명</label><div class="dropdown-btn" onclick="toggleDropdown('univ', event)"><span class="btn-text" id="btn-text-univ">전체 선택</span><span class="arrow">▼</span></div><div class="dropdown-menu" id="menu-univ"><input type="text" class="dropdown-search-input" placeholder="직접 입력 검색..." oninput="filterDropdownItems('univ', this.value)"><div class="dropdown-items-container" id="items-univ"></div></div></div>
                     <div class="form-group"><label>양성과정(공시)</label><div class="dropdown-btn" onclick="toggleDropdown('course', event)"><span class="btn-text" id="btn-text-course">전체 선택</span><span class="arrow">▼</span></div><div class="dropdown-menu" id="menu-course"><input type="text" class="dropdown-search-input" placeholder="직접 입력 검색..." oninput="filterDropdownItems('course', this.value)"><div class="dropdown-items-container" id="items-course"></div></div></div>
@@ -219,7 +218,6 @@
                 <div class="panel-title">⭐ 저장된 즐겨찾기 (<span id="favCount">0</span>)</div>
             </div>
             
-            <!-- 구글 스프레드시트 통신 상태 표시 상자 -->
             <div id="syncStatus" class="sync-status-box loading">
                 ⏳ 구글 시트에서 데이터를 가져오는 중...
             </div>
@@ -236,7 +234,6 @@
     </div>
 
     <script>
-        // 🔗 질문자님의 구글 스프레드시트 전용 고유 API 웹앱 주소 세팅 완료
         const GOOGLE_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzIVgZg2MAqlAQhdJQfqnZSzRtWDTtW7PuJyHvldutgIm05eY2Brh0E5Kuf7-soW3-T/exec";
 
         let RAW_DATA = [];
@@ -249,30 +246,32 @@
         const filterState = { region: new Set(), univ: new Set(), course: new Set(), cat: new Set(), est: new Set(), dept: new Set(), cert: new Set(), subj: new Set() };
 
         window.addEventListener('DOMContentLoaded', () => {
-            loadFavoritesFromGoogle(); // 파일을 실행하자마자 구글 시트 데이터 로드
+            loadFavoritesFromGoogle();
             autoLoadExcelData();
             document.addEventListener('click', (e) => { if (!e.target.closest('.form-group')) closeAllDropdowns(); });
         });
 
-        // 🟢 구글 스프레드시트에서 즐겨찾기 데이터 실시간 읽기 (GET 방식)
+        // 🟢 최초 구글 시트 데이터 내려받기
         function loadFavoritesFromGoogle() {
             setSyncStatus("loading", "⏳ 구글 시트에서 데이터를 가져오는 중...");
             fetch(GOOGLE_WEB_APP_URL)
                 .then(res => res.json())
                 .then(data => {
                     favorites = data;
-                    renderFavorites();
+                    renderFavorites(); // 화면 렌더링
                     setSyncStatus("success", "🟢 구글 스프레드시트와 실시간 동기화 완료");
                 })
                 .catch(err => {
                     console.error("구글 로딩 에러:", err);
-                    setSyncStatus("error", "❌ 구글 동기화 실패 (네트워크 또는 배포 상태 확인)");
+                    setSyncStatus("error", "❌ 구글 동기화 실패");
                 });
         }
 
-        // 🟢 구글 스프레드시트에 즐겨찾기 데이터 실시간 저장 (POST 방식)
+        // 🔄 핵심 수정 사항: 화면 UI를 먼저 리렌더링(renderFavorites)하고 배경에서 구글 시트로 백그라운드 전송
         function saveFavoritesToGoogle() {
+            renderFavorites(); // 💡 새로고침할 필요 없이 화면 목록부터 즉시 업데이트!
             setSyncStatus("loading", "⏳ 구글 시트에 변경사항 저장 중...");
+            
             fetch(GOOGLE_WEB_APP_URL, {
                 method: "POST",
                 body: JSON.stringify({ action: "save", favorites: favorites })
@@ -280,30 +279,25 @@
             .then(res => res.json())
             .then(resData => {
                 if(resData.status === "success") {
-                    setSyncStatus("success", "🟢 구글 스프레드시트에 저장 완료");
+                    setSyncStatus("success", "🟢 구글 스프레드시트에 실시간 저장 완료");
                 }
             })
             .catch(err => {
                 console.error("구글 저장 에러:", err);
-                setSyncStatus("error", "❌ 구글 저장 실패");
+                setSyncStatus("error", "❌ 구글 저장 실패 (클릭 작업은 로컬 화면에 유지됨)");
             });
-            renderFavorites();
         }
 
-        // 연동 상태 UI 변화 안내 처리 함수
         function setSyncStatus(type, text) {
             const statusBox = document.getElementById('syncStatus');
             statusBox.innerText = text;
             statusBox.className = "sync-status-box";
             if(type === "loading") statusBox.classList.add('loading');
             if(type === "error") {
-                statusBox.style.background = "#fef2f2";
-                statusBox.style.border = "1px solid #fca5a5";
-                statusBox.style.color = "#991b1b";
+                statusBox.style.background = "#fef2f2"; statusBox.style.border = "1px solid #fca5a5"; statusBox.style.color = "#991b1b";
             }
         }
 
-        // --- 이하 고정 데이터 UI 로직 일치 ---
         function autoLoadExcelData() {
             const cacheBustingUrl = "data.xlsx?v=" + new Date().getTime();
             fetch(cacheBustingUrl)
@@ -311,7 +305,7 @@
                 .then(buffer => { parseAndLoadExcel(buffer); })
                 .catch(err => {
                     document.getElementById('resultCount').innerText = "엑셀 연동 필요";
-                    document.getElementById('resultTbody').innerHTML = `<tr><td colspan="11" style="text-align:center; padding: 3rem; color: #64748b;">⚠️ <strong>data.xlsx</strong> 파일을 자동 로드하지 못했습니다.<br><br>HTML 파일과 동일 폴더 내에 배치하거나 수동 연동을 이용해 주세요.</td></tr>`;
+                    document.getElementById('resultTbody').innerHTML = `<tr><td colspan="11" style="text-align:center; padding: 3rem; color: #64748b;">⚠️ <strong>data.xlsx</strong> 파일을 발견하지 못했습니다.</td></tr>`;
                 });
         }
 
@@ -456,15 +450,20 @@
             tbody.appendChild(fragment);
         }
 
+        // 즐겨찾기 핸들러 함수들
         function addFavorite(row) {
             const [region, univ, course, cat, est, dept, cert, subj] = row;
             const id = `${region}_${univ}_${course}_${dept}_${cert}_${subj}`;
             if (favorites.some(f => f.id === id)) { alert('이미 즐겨찾기에 등록된 항목입니다.'); return; }
             favorites.push({ id, region, univ, course, dept, cert, subj });
-            saveFavoritesToGoogle();
+            saveFavoritesToGoogle(); // UI 선반영 후 클라우드 저장 실행
         }
 
-        function removeFavorite(id) { favorites = favorites.filter(f => f.id !== id); saveFavoritesToGoogle(); }
+        function removeFavorite(id) { 
+            favorites = favorites.filter(f => f.id !== id); 
+            saveFavoritesToGoogle(); 
+        }
+
         function deleteSelectedFavorites() {
             const checkedBoxes = document.querySelectorAll('.fav-cb:checked');
             if (checkedBoxes.length === 0) return alert('삭제할 항목을 선택해주세요.');
@@ -473,7 +472,14 @@
             favorites = favorites.filter(f => !idsToDelete.includes(f.id));
             saveFavoritesToGoogle();
         }
-        function clearAllFavorites() { if (favorites.length === 0) return; if (!confirm('즐겨찾기 보관함을 전부 비우시겠습니까?')) return; favorites = []; saveFavoritesToGoogle(); }
+
+        function clearAllFavorites() { 
+            if (favorites.length === 0) return; 
+            if (!confirm('즐겨찾기 보관함을 전부 비우시겠습니까?')) return; 
+            favorites = []; 
+            saveFavoritesToGoogle(); 
+        }
+
         function toggleSelectAllFavs(isChecked) { document.querySelectorAll('.fav-cb').forEach(cb => cb.checked = isChecked); }
         function updateFavSelectAllStatus() {
             const len = document.querySelectorAll('.fav-cb').length;
@@ -481,6 +487,7 @@
             document.getElementById('favSelectAll').checked = len > 0 && len === chkLen;
         }
 
+        // 즐겨찾기 우측 패널 UI 즉시 갱신 함수
         function renderFavorites() {
             document.getElementById('favCount').innerText = favorites.length;
             document.getElementById('favSelectAll').checked = false;
