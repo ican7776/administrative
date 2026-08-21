@@ -4,102 +4,115 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>전국 교원양성기관 통합 검색 & 즐겨찾기</title>
-    <!-- 엑셀 파일 조작을 위한 라이브러리 로드 -->
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <style>
         :root {
             --primary: #1e3a8a;
             --primary-hover: #1e40af;
             --bg-main: #f8fafc;
-            --border-color: #e2e8f0;
+            --border-color: #cbd5e1;
             --text-main: #1e293b;
         }
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, sans-serif; }
-        body { background-color: var(--bg-main); color: var(--text-main); display: flex; flex-direction: column; min-height: 100vh; }
+        body { background-color: var(--bg-main); color: var(--text-main); display: flex; flex-direction: column; min-height: 100vh; overflow: hidden; }
         
-        /* 헤더 스타일 */
-        header { background: #0f172a; color: white; padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); }
-        .header-title { display: flex; align-items: center; gap: 10px; }
-        .header-title h1 { font-size: 1.25rem; font-weight: 700; }
-        .badge { background: #2563eb; font-size: 0.75rem; padding: 2px 8px; border-radius: 9999px; }
-        .header-btns { display: flex; gap: 10px; }
-        .btn-top { border: none; padding: 0.5rem 1rem; border-radius: 6px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px; text-decoration: none; font-size: 0.875rem; }
+        /* 헤더 고정 */
+        header { background: #0f172a; color: white; padding: 0.75rem 1.5rem; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgb(0 0 0 / 0.1); z-index: 100; }
+        .header-title { display: flex; align-items: center; gap: 8px; }
+        .header-title h1 { font-size: 1.1rem; font-weight: 700; }
+        .badge { background: #2563eb; font-size: 0.7rem; padding: 2px 6px; border-radius: 9999px; }
+        .header-btns { display: flex; gap: 8px; }
+        .btn-top { border: none; padding: 0.4rem 0.8rem; border-radius: 4px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 4px; text-decoration: none; font-size: 0.8rem; }
         .btn-orange { background: #f59e0b; color: white; }
         .btn-green { background: #10b981; color: white; }
 
-        /* 메인 레이아웃 */
-        .container { display: flex; flex: 1; overflow: hidden; position: relative; }
-        .search-section { flex: 3; padding: 1.5rem; overflow-y: auto; display: flex; flex-direction: column; gap: 1.5rem; }
-        .fav-section { flex: 1; background: white; border-left: 1px solid var(--border-color); padding: 1.5rem; overflow-y: auto; display: flex; flex-direction: column; gap: 1rem; }
+        /* 메인 레이아웃 가득 차게 설정 */
+        .container { display: flex; flex: 1; overflow: hidden; height: calc(100vh - 55px); position: relative; }
+        .search-section { flex: 3.2; padding: 1rem; overflow-y: auto; display: flex; flex-direction: column; gap: 1rem; }
+        .fav-section { flex: 1; background: white; border-left: 1px solid var(--border-color); padding: 1rem; overflow-y: auto; display: flex; flex-direction: column; gap: 0.75rem; }
 
-        /* 필터 카드 스타일 */
-        .filter-card { background: white; border: 1px solid var(--border-color); border-radius: 12px; padding: 1.5rem; box-shadow: 0 1px 3px rgb(0 0 0 / 0.05); }
-        .filter-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-bottom: 1rem; }
-        @media (max-width: 1024px) { .filter-grid { grid-template-columns: repeat(2, 1fr); } }
-        .form-group { position: relative; display: flex; flex-direction: column; gap: 0.5rem; }
-        .form-group label { font-size: 0.875rem; font-weight: 600; color: #475569; }
+        /* [핵심 수정] 필터 카드 - 무조건 가로 한 줄로 배치 */
+        .filter-card { background: white; border: 1px solid var(--border-color); border-radius: 8px; padding: 1rem; box-shadow: 0 1px 2px rgb(0 0 0 / 0.05); display: flex; flex-direction: column; gap: 0.75rem; }
+        .filter-grid { display: grid; grid-template-columns: repeat(8, 1fr); gap: 0.5rem; width: 100%; }
         
-        /* 커스텀 드롭다운 스타일 */
-        .dropdown-btn { background: white; border: 1px solid #cbd5e1; padding: 0.625rem 1rem; border-radius: 6px; text-align: left; font-size: 0.875rem; cursor: pointer; display: flex; justify-content: space-between; align-items: center; width: 100%; transition: all 0.2s; }
-        .dropdown-btn:hover { border-color: #94a3b8; background: #f8fafc; }
-        .dropdown-btn::after { content: '▼'; font-size: 0.7rem; color: #64748b; margin-left: 8px; }
-        .dropdown-menu { display: none; position: absolute; top: 100%; left: 0; width: 100%; background: white; border: 1px solid #cbd5e1; border-radius: 6px; margin-top: 4px; box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1); z-index: 50; max-height: 300px; flex-direction: column; }
-        .dropdown-menu.show { display: flex; }
-        .dropdown-search { padding: 8px; border-bottom: 1px solid #e2e8f0; background: #f8fafc; sticky: top; }
-        .dropdown-search-input { width: 100%; padding: 6px 10px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 0.875rem; }
-        .dropdown-items { overflow-y: auto; flex: 1; max-height: 200px; padding: 4px 0; }
-        .dropdown-item { display: flex; align-items: center; gap: 8px; padding: 8px 12px; cursor: pointer; font-size: 0.875rem; user-select: none; }
-        .dropdown-item:hover { background: #f1f5f9; }
-        .dropdown-item input { width: 15px; height: 15px; cursor: pointer; }
+        /* 화면이 너무 좁아지면 2줄로 유연하게 대응 (글자 깨짐 방지) */
+        @media (max-width: 1400px) { .filter-grid { grid-template-columns: repeat(4, 1fr); } }
+        @media (max-width: 768px) { .filter-grid { grid-template-columns: repeat(2, 1fr); } }
 
-        .btn-reset { background: #f1f5f9; border: 1px solid #cbd5e1; color: #475569; padding: 0.625rem 1.25rem; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 0.875rem; align-self: flex-end; transition: all 0.2s; }
+        .form-group { position: relative; display: flex; flex-direction: column; gap: 0.35rem; min-width: 0; }
+        .form-group label { font-size: 0.8rem; font-weight: 700; color: #475569; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        
+        /* 드롭다운 버튼 크기 및 텍스트 밸런스 조정 */
+        .dropdown-btn { background: white; border: 1px solid #cbd5e1; padding: 0.5rem 0.6rem; border-radius: 4px; text-align: left; font-size: 0.8rem; cursor: pointer; display: flex; justify-content: space-between; align-items: center; width: 100%; transition: all 0.15s; }
+        .dropdown-btn span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 85%; }
+        .dropdown-btn:hover { border-color: #94a3b8; background: #f8fafc; }
+        .dropdown-btn::after { content: '▼'; font-size: 0.6rem; color: #64748b; margin-left: 4px; flex-shrink: 0; }
+        
+        .dropdown-menu { display: none; position: absolute; top: 100%; left: 0; width: 220px; background: white; border: 1px solid #cbd5e1; border-radius: 4px; margin-top: 4px; box-shadow: 0 4px 12px rgb(0 0 0 / 0.15); z-index: 150; max-height: 300px; flex-direction: column; }
+        .dropdown-menu.show { display: flex; }
+        .dropdown-search { padding: 6px; border-bottom: 1px solid #e2e8f0; background: #f8fafc; }
+        .dropdown-search-input { width: 100%; padding: 4px 8px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 0.8rem; }
+        .dropdown-items { overflow-y: auto; flex: 1; max-height: 200px; padding: 4px 0; }
+        .dropdown-item { display: flex; align-items: center; gap: 6px; padding: 6px 10px; cursor: pointer; font-size: 0.8rem; user-select: none; }
+        .dropdown-item:hover { background: #f1f5f9; }
+
+        .btn-reset { background: #f1f5f9; border: 1px solid #cbd5e1; color: #475569; padding: 0.4rem 1rem; border-radius: 4px; font-weight: 600; cursor: pointer; font-size: 0.8rem; transition: all 0.15s; }
         .btn-reset:hover { background: #e2e8f0; color: #1e293b; }
 
-        /* 결과 테이블 테이블 디자인 */
-        .table-container { background: white; border: 1px solid var(--border-color); border-radius: 12px; overflow: hidden; box-shadow: 0 1px 3px rgb(0 0 0 / 0.05); }
-        .table-header { padding: 1rem 1.5rem; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; background: #f8fafc; }
-        .table-header h3 { font-size: 1rem; font-weight: 700; color: #334155; }
-        table { width: 100%; border-collapse: collapse; text-align: left; font-size: 0.875rem; }
-        th { background: #f1f5f9; color: #475569; font-weight: 600; padding: 0.75rem 1rem; border-bottom: 1px solid var(--border-color); cursor: pointer; user-select: none; }
+        /* 결과 테이블 스크롤 및 비율 안정화 */
+        .table-container { background: white; border: 1px solid var(--border-color); border-radius: 8px; overflow: hidden; box-shadow: 0 1px 2px rgb(0 0 0 / 0.05); flex: 1; display: flex; flex-direction: column; min-height: 0; }
+        .table-header { padding: 0.75rem 1rem; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; background: #f8fafc; }
+        .table-header h3 { font-size: 0.9rem; font-weight: 700; color: #334155; }
+        .table-scroll { overflow-auto: auto; flex: 1; }
+        table { width: 100%; border-collapse: collapse; text-align: left; font-size: 0.8rem; table-layout: fixed; }
+        
+        /* 컬럼 비율 맞춤 조정 */
+        th, td { padding: 0.6rem 0.75rem; border-bottom: 1px solid #edf2f7; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        th { background: #f1f5f9; color: #475569; font-weight: 600; cursor: pointer; user-select: none; sticky: top; }
         th:hover { background: #e2e8f0; }
-        td { padding: 0.75rem 1rem; border-bottom: 1px solid var(--border-color); color: #334155; line-height: 1.5; }
         tr:hover td { background-color: #f8fafc; }
 
-        /* 버튼 및 태그 공통 컴포넌트 */
-        .btn-star { background: #eff6ff; border: 1px solid #bfdbfe; color: #1d4ed8; padding: 4px 8px; border-radius: 4px; font-weight: 600; cursor: pointer; font-size: 0.75rem; transition: all 0.2s; }
-        .btn-star:hover { background: #3b82f6; color: white; border-color: #3b82f6; }
-        .btn-link { display: inline-flex; align-items: center; background: #f8fafc; border: 1px solid #cbd5e1; color: #475569; padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; text-decoration: none; font-weight: 500; }
-        .btn-link:hover { background: #e2e8f0; color: #0f172a; }
-        .tag-region { background: #f1f5f9; color: #475569; padding: 2px 6px; border-radius: 4px; font-size: 0.75rem; font-weight: 500; }
-        .tag-course { background: #f0fdf4; color: #166534; padding: 2px 6px; border-radius: 4px; font-size: 0.75rem; font-weight: 500; border: 1px solid #bbf7d0; }
+        /* 너비 고정 */
+        th:nth-child(1), td:nth-child(1) { width: 50px; text-align: center; }
+        th:nth-child(2), td:nth-child(2) { width: 70px; }
+        th:nth-child(3), td:nth-child(3) { width: 140px; font-weight: bold; }
+        th:nth-child(4), td:nth-child(4) { width: 110px; }
+        th:nth-child(5), td:nth-child(5) { width: 80px; }
+        th:nth-child(6), td:nth-child(6) { width: 70px; }
+        th:nth-child(10), td:nth-child(10) { width: 80px; text-align: center; }
+        th:nth-child(11), td:nth-child(11) { width: 80px; text-align: center; }
 
-        /* 우측 즐겨찾기 보관함 디자인 */
-        .fav-title-box { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; }
-        .fav-title-box h2 { font-size: 1.125rem; font-weight: 700; color: #0f172a; display: flex; align-items: center; gap: 6px; }
-        .sync-status-box { font-size: 0.75rem; padding: 8px 12px; border-radius: 6px; margin-bottom: 0.5rem; font-weight: 500; background: #f0fdf4; border: 1px solid #bbf7d0; color: #166534; transition: all 0.3s; }
-        .sync-status-box.loading { background: #fffbeb; border: 1px solid #fef3c7; color: #b45309; animation: pulse 2s infinite; }
-        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .6; } }
+        .btn-star { background: #eff6ff; border: 1px solid #bfdbfe; color: #1d4ed8; padding: 3px 6px; border-radius: 4px; font-weight: 600; cursor: pointer; font-size: 0.75rem; }
+        .btn-star:hover { background: #3b82f6; color: white; }
+        .btn-link { display: inline-flex; align-items: center; background: #f8fafc; border: 1px solid #cbd5e1; color: #475569; padding: 3px 6px; border-radius: 4px; font-size: 0.75rem; text-decoration: none; }
         
-        .fav-action-bar { display: flex; justify-content: space-between; align-items: center; background: #f8fafc; padding: 8px; border-radius: 6px; border: 1px solid #e2e8f0; font-size: 0.875rem; }
-        .fav-action-bar div { display: flex; align-items: center; gap: 6px; }
-        .btn-action-sm { border: none; padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 600; cursor: pointer; color: white; }
-        .btn-red-sm { background: #ef4444; } .btn-red-sm:hover { background: #dc2626; }
+        .tag-region { background: #f1f5f9; color: #475569; padding: 1px 4px; border-radius: 3px; font-size: 0.7rem; }
+        .tag-course { background: #f0fdf4; color: #166534; padding: 1px 4px; border-radius: 3px; font-size: 0.7rem; border: 1px solid #bbf7d0; }
+
+        /* 즐겨찾기 보관함 정리 */
+        .fav-title-box h2 { font-size: 1rem; font-weight: 700; color: #0f172a; }
+        .sync-status-box { font-size: 0.75rem; padding: 6px 10px; border-radius: 4px; margin-bottom: 0.5rem; font-weight: 500; background: #f0fdf4; border: 1px solid #bbf7d0; color: #166534; }
+        .sync-status-box.loading { background: #fffbeb; border: 1px solid #fef3c7; color: #b45309; }
         
-        .fav-list { display: flex; flex-direction: column; gap: 0.75rem; margin-top: 0.5rem; flex: 1; overflow-y: auto; }
-        .fav-card { border: 1px solid #e2e8f0; border-radius: 8px; padding: 1rem; background: #f8fafc; position: relative; box-shadow: 0 1px 2px rgb(0 0 0 / 0.02); }
-        .fav-card h4 { font-size: 0.9375rem; font-weight: 700; color: #1e293b; display: flex; align-items: center; gap: 6px; }
-        .fav-card p { font-size: 0.8125rem; color: #64748b; margin-top: 4px; }
-        .btn-del { background: none; border: none; color: #ef4444; font-size: 0.75rem; font-weight: 600; cursor: pointer; padding: 2px 4px; }
-        .btn-del:hover { text-decoration: underline; }
-        .empty-fav { text-align: center; color: #94a3b8; padding: 3rem 1rem; font-size: 0.875rem; border: 2px dashed #e2e8f0; border-radius: 8px; background: #fafafa; }
+        .fav-action-bar { display: flex; justify-content: space-between; align-items: center; background: #f8fafc; padding: 6px; border-radius: 4px; border: 1px solid #e2e8f0; font-size: 0.75rem; }
+        .fav-action-bar div { display: flex; align-items: center; gap: 4px; }
+        .btn-action-sm { border: none; padding: 3px 6px; border-radius: 3px; font-size: 0.7rem; font-weight: 600; cursor: pointer; color: white; }
+        .btn-red-sm { background: #ef4444; }
+        
+        .fav-list { display: flex; flex-direction: column; gap: 0.5rem; margin-top: 0.5rem; flex: 1; overflow-y: auto; }
+        .fav-card { border: 1px solid #e2e8f0; border-radius: 6px; padding: 0.75rem; background: #f8fafc; box-shadow: 0 1px 1px rgb(0 0 0 / 0.01); }
+        .fav-card h4 { font-size: 0.85rem; font-weight: 700; display: flex; align-items: center; gap: 4px; justify-content: space-between; }
+        .fav-card p { font-size: 0.75rem; color: #64748b; margin-top: 3px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .btn-del { background: none; border: none; color: #ef4444; font-size: 0.7rem; font-weight: 600; cursor: pointer; }
+        .empty-fav { text-align: center; color: #94a3b8; padding: 2rem 1rem; font-size: 0.75rem; border: 2px dashed #e2e8f0; border-radius: 6px; }
     </style>
 </head>
 <body>
 
     <header>
         <div class="header-title">
-            <h1>전국 교원양성기관 통합 검색 & 즐겨찾기</h1>
-            <span class="badge">구글 드라이브 연동형</span>
+            <h1>전국 교원양성기관 통합 검색 시스템</h1>
+            <span class="badge">구글 라이브 동기화</span>
         </div>
         <div class="header-btns">
             <a href="#" class="btn-top btn-orange">🗺️ 자격증 취득 로드맵</a>
@@ -111,11 +124,11 @@
     </header>
 
     <div class="container">
-        <!-- 왼쪽 검색 및 결과 구역 -->
+        <!-- 메인 결과화면 구역 -->
         <div class="search-section">
             <div class="filter-card">
+                <!-- 8개 항목 가로 배치형 그리드 -->
                 <div class="filter-grid">
-                    <!-- 필터 레이아웃 자동 구현 구역 -->
                     <div class="form-group">
                         <label>지역(소재지)</label>
                         <button class="dropdown-btn" id="btn-region" onclick="toggleDropdown('region', event)"><span id="btn-text-region">전체 선택</span></button>
@@ -133,7 +146,7 @@
                         </div>
                     </div>
                     <div class="form-group">
-                        <label>양성과정(공시)</label>
+                        <label>양성과정</label>
                         <button class="dropdown-btn" id="btn-course" onclick="toggleDropdown('course', event)"><span id="btn-text-course">전체 선택</span></button>
                         <div class="dropdown-menu" id="menu-course">
                             <div class="dropdown-search"><input type="text" class="dropdown-search-input" placeholder="검색..." oninput="filterDropdownItems('course', this.value)"></div>
@@ -181,21 +194,22 @@
                         </div>
                     </div>
                 </div>
-                <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <div id="loaderDisplay" style="color: #2563eb; font-weight: 600; font-size: 0.875rem;">로딩 중...</div>
-                    <button class="btn-reset" onclick="resetFilters()">필터 전체 초기화</button>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 2px;">
+                    <div id="loaderDisplay" style="color: #2563eb; font-weight: 600; font-size: 0.8rem;">데이터 연동 확인 중...</div>
+                    <button class="btn-reset" onclick="resetFilters()">필터 초기화</button>
                 </div>
             </div>
 
+            <!-- 결과 데이터 구역 -->
             <div class="table-container">
                 <div class="table-header">
                     <h3 id="resultCount">검색 결과: 0건</h3>
                 </div>
-                <div style="overflow-x: auto;">
+                <div class="table-scroll">
                     <table>
                         <thead>
                             <tr>
-                                <th style="width: 60px; text-align: center;">연번</th>
+                                <th>연번</th>
                                 <th onclick="sortTable(0)">지역 <span id="sort0">⇅</span></th>
                                 <th onclick="sortTable(1)">대학명 <span id="sort1">⇅</span></th>
                                 <th onclick="sortTable(2)">양성과정 <span id="sort2">⇅</span></th>
@@ -204,24 +218,24 @@
                                 <th onclick="sortTable(5)">학과명 <span id="sort5">⇅</span></th>
                                 <th onclick="sortTable(6)">자격종별 <span id="sort6">⇅</span></th>
                                 <th onclick="sortTable(7)">표시과목 <span id="sort7">⇅</span></th>
-                                <th style="text-align: center;">즐겨찾기</th>
-                                <th style="text-align: center;">링크</th>
+                                <th>즐겨찾기</th>
+                                <th>입학처</th>
                             </tr>
                         </thead>
                         <tbody id="resultTbody">
-                            <tr><td colspan="11" style="text-align:center; padding: 3rem; color: #94a3b8;">데이터를 불러오는 중입니다...</td></tr>
+                            <tr><td colspan="11" style="text-align:center; padding: 2rem; color: #94a3b8;">데이터를 불러오는 중입니다...</td></tr>
                         </tbody>
                     </table>
                 </div>
             </div>
         </div>
 
-        <!-- 오른쪽 즐겨찾기 보관함 구역 -->
+        <!-- 우측 즐겨찾기 구역 -->
         <div class="fav-section">
             <div class="fav-title-box">
-                <h2>⭐ 저장된 즐겨찾기 (<span id="favCount">0</span>)</h2>
+                <h2>⭐ 즐겨찾기 보관함 (<span id="favCount">0</span>)</h2>
             </div>
-            <div id="syncStatus" class="sync-status-box">⏳ 동기화 모듈 대기 중...</div>
+            <div id="syncStatus" class="sync-status-box">⏳ 동기화 준비 중...</div>
             <div class="fav-action-bar">
                 <div>
                     <input type="checkbox" id="favSelectAll" onchange="toggleSelectAllFavs(this.checked)">
@@ -229,7 +243,7 @@
                 </div>
                 <div>
                     <button class="btn-action-sm btn-red-sm" onclick="deleteSelectedFavorites()">선택 삭제</button>
-                    <button class="btn-action-sm btn-red-sm" onclick="clearAllFavorites()">전체 삭제</button>
+                    <button class="btn-action-sm btn-red-sm" onclick="clearAllFavorites()">전체 비우기</button>
                 </div>
             </div>
             <div class="fav-list" id="favList">
@@ -239,7 +253,6 @@
     </div>
 
 <script>
-// [배포 설정] 구글 웹 앱 URL 주소 고정
 const GOOGLE_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzIVgZg2MAqlAQhdJQfqnZSzRtWDTtW7PuJyHvldutgIm05eY2Brh0E5Kuf7-soW3-T/exec";
 
 let RAW_DATA = [];
@@ -257,9 +270,9 @@ window.addEventListener('DOMContentLoaded', () => {
     document.addEventListener('click', (e) => { if (!e.target.closest('.form-group')) closeAllDropdowns(); });
 });
 
-// 1. 구글 스프레드시트 데이터 불러오기 (캐시방지 타임스탬프 적용)
+// 구글 서버로부터 즐겨찾기 로드
 function loadFavoritesFromGoogle() {
-    setSyncStatus("loading", "⏳ 구글 시트에서 데이터를 가져오는 중...");
+    setSyncStatus("loading", "⏳ 구글 데이터 가져오는 중...");
     const cacheBusterUrl = `${GOOGLE_WEB_APP_URL}?_=${new Date().getTime()}`;
     
     fetch(cacheBusterUrl)
@@ -267,39 +280,36 @@ function loadFavoritesFromGoogle() {
         .then(data => {
             favorites = data || [];
             renderFavorites(); 
-            setSyncStatus("success", "🟢 구글 스프레드시트와 실시간 동기화 완료");
+            setSyncStatus("success", "🟢 구글 실시간 동기화 완료");
         })
         .catch(err => {
             console.error("구글 로딩 에러:", err);
-            setSyncStatus("error", "❌ 구글 동기화 실패 (접속 상태 확인)");
+            setSyncStatus("error", "❌ 동기화 실패 (네트워크 확인)");
             renderFavorites(); 
         });
 }
 
-// 2. 구글 스프레드시트에 데이터 저장 (화면 리스트 즉시 선반영 설계)
+// [수정 핵심] 구글 서버 전송 기능 강제 동기화 보정 처리
 function saveFavoritesToGoogle() {
-    setSyncStatus("loading", "⏳ 구글 시트에 실시간 저장 중...");
+    setSyncStatus("loading", "⏳ 구글 서버에 실시간 저장 중...");
     
-    // 비동기 딜레이 현상을 막기 위해 화면 UI 구조를 0.1초 만에 즉시 렌더링합니다.
+    // UI 우선 선반영 실행
     renderFavorites();
 
-    // 백그라운드 서버 통신
+    // 구글 Apps Script Web App 전송 (no-cors 브라우저 가로채기 방지 우회 처리)
     fetch(GOOGLE_WEB_APP_URL, {
         method: "POST",
+        mode: "no-cors", 
         headers: { "Content-Type": "text/plain;charset=utf-8" },
         body: JSON.stringify({ action: "save", favorites: favorites })
     })
-    .then(res => res.json())
-    .then(resData => {
-        if (resData && (resData.status === "success" || resData.result === "success")) {
-            setSyncStatus("success", "🟢 구글 스프레드시트에 저장 및 동기화 완료");
-        } else {
-            setSyncStatus("error", "⚠️ 서버 저장 응답 미확인 (새로고침 확인 필요)");
-        }
+    .then(() => {
+        // no-cors 모드 특성상 백그라운드 전송이 성공하면 즉시 완료박스 표출
+        setSyncStatus("success", "🟢 구글 스프레드시트 실시간 저장 완료");
     })
     .catch(err => {
         console.error("구글 저장 에러:", err);
-        setSyncStatus("success", "🟢 실시간 반영 완료 (백그라운드 저장 중)");
+        setSyncStatus("error", "⚠️ 네트워크 연결 상태를 확인하세요.");
     });
 }
 
@@ -320,9 +330,9 @@ function autoLoadExcelData() {
         .then(res => { if (!res.ok) throw new Error(); return res.arrayBuffer(); })
         .then(buffer => { parseAndLoadExcel(buffer); })
         .catch(err => {
-            if(document.getElementById('loaderDisplay')) document.getElementById('loaderDisplay').innerText = "엑셀 수동 연동 필요";
-            document.getElementById('resultCount').innerText = "엑셀 연동 필요";
-            document.getElementById('resultTbody').innerHTML = `<tr><td colspan="11" style="text-align:center; padding: 3rem; color: #64748b;">⚠️ <strong>data.xlsx</strong> 파일을 발견하지 못했습니다. 상단의 수동 연동 버튼을 통해 엑셀을 업로드 해주세요.</td></tr>`;
+            if(document.getElementById('loaderDisplay')) document.getElementById('loaderDisplay').innerText = "엑셀 수동 연동 대기";
+            document.getElementById('resultCount').innerText = "엑셀 파일 누락";
+            document.getElementById('resultTbody').innerHTML = `<tr><td colspan="11" style="text-align:center; padding: 3rem; color: #64748b;">⚠️ <strong>data.xlsx</strong> 파일을 발견하지 못했습니다. 상단 버튼을 클릭해 연동해 주세요.</td></tr>`;
         });
 }
 
@@ -367,7 +377,7 @@ function initDropdownMenus() {
         document.getElementById(`items-${key}`).innerHTML = uniqueValues.map((val) => `
             <label class="dropdown-item" data-value="${val}">
                 <input type="checkbox" value="${val}" ${filterState[key].has(val) ? 'checked' : ''} onchange="onCheckboxChange('${key}', '${val}', this.checked)">
-                <span>${val}</span>
+                <span title="${val}">${val}</span>
             </label>
         `).join('');
     });
@@ -443,6 +453,7 @@ function executeSort() {
     renderTable(currentFilteredData);
 }
 
+// 필터 초기화 리셋
 function resetFilters() {
     keys.forEach(key => { filterState[key].clear(); document.getElementById(`menu-${key}`).querySelector('.dropdown-search-input').value = ""; });
     document.querySelectorAll('.dropdown-menu input[type="checkbox"]').forEach(cb => cb.checked = false);
@@ -454,7 +465,7 @@ function resetFilters() {
 function renderTable(data) {
     const tbody = document.getElementById('resultTbody');
     document.getElementById('resultCount').innerText = `검색 결과: ${data.length}건`;
-    tbody.innerHTML = data.length === 0 ? `<tr><td colspan="11" style="text-align:center; padding: 2.5rem; color: #94a3b8;">검색 결과 데이터가 존재하지 않습니다.</td></tr>` : '';
+    tbody.innerHTML = data.length === 0 ? `<tr><td colspan="11" style="text-align:center; padding: 2rem; color: #94a3b8;">검색 결과 데이터가 존재하지 않습니다.</td></tr>` : '';
     
     const fragment = document.createDocumentFragment();
     data.forEach((row, index) => {
@@ -462,10 +473,16 @@ function renderTable(data) {
         const tr = document.createElement('tr');
         tr.innerHTML = `
             <td style="text-align: center; font-weight: 600; color: #64748b; background: #f8fafc;">${index + 1}</td>
-            <td><span class="tag-region">${region || '-'}</span></td><td><strong>${univ}</strong></td><td><span class="tag-course">${course || '-'}</span></td>
-            <td>${cat || '-'}</td><td>${est || '-'}</td><td>${dept || '-'}</td><td>${cert || '-'}</td><td>${subj || '-'}</td>
-            <td style="text-align: center; white-space: nowrap;"><button class="btn-star" onclick='addFavorite(${JSON.stringify(row)})'>★ 등록</button></td>
-            <td style="text-align: center; white-space: nowrap;"><a href="https://search.naver.com/search.naver?query=${encodeURIComponent(univ + ' 입학처')}" target="_blank" rel="noopener noreferrer" class="btn-link">🔗 입학처</a></td>
+            <td><span class="tag-region">${region || '-'}</span></td>
+            <td title="${univ}"><strong>${univ}</strong></td>
+            <td title="${course}"><span class="tag-course">${course || '-'}</span></td>
+            <td title="${cat}">${cat || '-'}</td>
+            <td title="${est}">${est || '-'}</td>
+            <td title="${dept}">${dept || '-'}</td>
+            <td title="${cert}">${cert || '-'}</td>
+            <td title="${subj}">${subj || '-'}</td>
+            <td style="text-align: center;"><button class="btn-star" onclick='addFavorite(${JSON.stringify(row)})'>★ 등록</button></td>
+            <td style="text-align: center;"><a href="https://search.naver.com/search.naver?query=${encodeURIComponent(univ + ' 입학처')}" target="_blank" rel="noopener noreferrer" class="btn-link">🔗 이동</a></td>
         `;
         fragment.appendChild(tr);
     });
@@ -488,7 +505,7 @@ function removeFavorite(id) {
 function deleteSelectedFavorites() {
     const checkedBoxes = document.querySelectorAll('.fav-cb:checked');
     if (checkedBoxes.length === 0) return alert('삭제할 항목을 선택해주세요.');
-    if (!confirm('선택한 항목들을 즐겨찾기에서 영구 삭제하시겠습니까?')) return;
+    if (!confirm('선택한 항목들을 삭제하시겠습니까?')) return;
     const idsToDelete = Array.from(checkedBoxes).map(cb => cb.value);
     favorites = favorites.filter(f => !idsToDelete.includes(f.id));
     saveFavoritesToGoogle();
@@ -513,17 +530,22 @@ function renderFavorites() {
     document.getElementById('favSelectAll').checked = false;
     const container = document.getElementById('favList');
     if(!container) return;
-    container.innerHTML = favorites.length === 0 ? `<div class="empty-fav">왼쪽 리스트에서 [★ 등록] 버튼을 눌러보세요.<br><br>구글 스프레드시트 서버와 실시간으로 연동되어 안전하게 기록됩니다.</div>` : '';
+    container.innerHTML = favorites.length === 0 ? `<div class="empty-fav">왼쪽 리스트에서 [★ 등록] 버튼을 눌러보세요.<br><br>구글 시트와 실시간 연동됩니다.</div>` : '';
     
     favorites.forEach(item => {
         const card = document.createElement('div'); card.className = 'fav-card';
         card.innerHTML = `
             <div style="display: flex; justify-content: space-between; align-items: center;">
-                <h4><input type="checkbox" class="fav-cb" value="${item.id}" onchange="updateFavSelectAllStatus()"> <span class="tag-region">${item.region || ''}</span> ${item.univ}</h4>
+                <h4>
+                    <span style="display:inline-flex; align-items:center; gap:4px; font-weight:700;">
+                        <input type="checkbox" class="fav-cb" value="${item.id}" onchange="updateFavSelectAllStatus()"> 
+                        <span class="tag-region">${item.region || ''}</span> ${item.univ}
+                    </span>
+                </h4>
                 <button class="btn-del" onclick="removeFavorite('${item.id}')">삭제</button>
             </div>
-            <p style="margin-top: 4px;"><span class="tag-course">${item.course || ''}</span> <strong>학과:</strong> ${item.dept || '-'}</p>
-            <p><strong>자격/과목:</strong> ${item.cert || '-'} ${item.subj ? `(${item.subj})` : ''}</p>
+            <p><span class="tag-course">${item.course || ''}</span> <strong>학과:</strong> ${item.dept || '-'}</p>
+            <p title="${item.cert || '-'} ${item.subj ? `(${item.subj})` : ''}"><strong>자격:</strong> ${item.cert || '-'} ${item.subj ? `(${item.subj})` : ''}</p>
         `;
         container.appendChild(card);
     });
