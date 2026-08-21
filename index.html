@@ -18,30 +18,98 @@
         .main-content { flex: 1; padding: 1.25rem; overflow-y: auto; display: flex; flex-direction: column; gap: 1rem; }
         .right-panel { width: 360px; background: white; border-left: 1px solid #e2e8f0; display: flex; flex-direction: column; padding: 1rem; box-shadow: -2px 0 8px rgba(0,0,0,0.03); }
 
-        /* 검색 영역 */
+        /* 상단 상세 검색 카드 */
         .search-card { background: white; padding: 1rem 1.25rem; border-radius: 8px; border: 1px solid #e2e8f0; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
         .search-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 0.85rem; }
-        .form-group { display: flex; flex-direction: column; gap: 0.35rem; }
+        .form-group { display: flex; flex-direction: column; gap: 0.35rem; position: relative; }
         .form-group label { font-size: 0.8rem; font-weight: 600; color: #475569; }
-        .form-group input { padding: 0.5rem 0.75rem; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.875rem; outline: none; transition: border-color 0.15s; }
-        .form-group input:focus { border-color: #2563eb; box-shadow: 0 0 0 2px rgba(37,99,235,0.1); }
+
+        /* 체크박스 다중 선택 드롭다운 스타일 */
+        .dropdown-btn {
+            width: 100%;
+            padding: 0.45rem 0.65rem;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            background: white;
+            font-size: 0.825rem;
+            color: #334155;
+            text-align: left;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            transition: border-color 0.15s;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .dropdown-btn:hover, .dropdown-btn.active { border-color: #2563eb; }
+        .dropdown-btn .btn-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .dropdown-btn .arrow { font-size: 0.65rem; color: #64748b; margin-left: 6px; }
+
+        .dropdown-menu {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            max-height: 220px;
+            overflow-y: auto;
+            background: white;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+            z-index: 100;
+            padding: 0.4rem;
+            margin-top: 4px;
+        }
+        .dropdown-menu.show { display: block; }
         
+        .dropdown-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 0.35rem 0.5rem;
+            font-size: 0.8rem;
+            color: #334155;
+            cursor: pointer;
+            border-radius: 4px;
+            user-select: none;
+        }
+        .dropdown-item:hover { background-color: #f1f5f9; }
+        .dropdown-item input[type="checkbox"] { cursor: pointer; accent-color: #2563eb; }
+
         .search-actions { margin-top: 0.85rem; display: flex; justify-content: space-between; align-items: center; }
-        .result-count { font-size: 0.85rem; color: #64748b; font-weight: 500; }
-        .btn-reset { background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; padding: 0.4rem 0.75rem; border-radius: 6px; font-size: 0.8rem; cursor: pointer; }
+        .result-count { font-size: 0.85rem; color: #2563eb; font-weight: 700; }
+        .btn-reset { background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; padding: 0.4rem 0.75rem; border-radius: 6px; font-size: 0.8rem; cursor: pointer; font-weight: 600; }
         .btn-reset:hover { background: #e2e8f0; }
 
-        /* 결과 테이블 */
+        /* 결과 테이블 및 헤더 필터 */
         .table-container { background: white; border-radius: 8px; border: 1px solid #e2e8f0; overflow: auto; flex: 1; }
-        table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
-        th { background: #f8fafc; font-weight: 600; color: #334155; padding: 0.65rem 0.85rem; text-align: left; position: sticky; top: 0; border-bottom: 1px solid #e2e8f0; z-index: 10; }
-        td { padding: 0.65rem 0.85rem; border-bottom: 1px solid #f1f5f9; color: #334155; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.83rem; text-align: left; }
+        thead th { background: #f8fafc; color: #334155; padding: 0.75rem 0.65rem; border-bottom: 1px solid #cbd5e1; position: sticky; top: 0; z-index: 10; white-space: nowrap; }
+        
+        .th-content { display: flex; justify-content: space-between; align-items: center; font-weight: 700; font-size: 0.82rem; cursor: pointer; user-select: none; }
+        .th-content:hover { color: #2563eb; }
+        .sort-icon { font-size: 0.75rem; color: #94a3b8; }
+
+        td { padding: 0.6rem 0.65rem; border-bottom: 1px solid #f1f5f9; color: #334155; }
         tr:hover { background-color: #f8fafc; }
 
-        /* 버튼 컴포넌트 */
-        .btn-star { background: #fef9c3; color: #a16207; border: 1px solid #fde047; padding: 0.3rem 0.6rem; border-radius: 5px; font-size: 0.78rem; font-weight: 600; cursor: pointer; transition: 0.15s; }
+        .btn-star { 
+            background: #fef9c3; color: #a16207; border: 1px solid #fde047; 
+            padding: 0.35rem 0.6rem; border-radius: 4px; font-size: 0.75rem; font-weight: 600; 
+            cursor: pointer; transition: 0.15s; white-space: nowrap; word-break: keep-all; 
+            display: inline-flex; align-items: center; justify-content: center;
+        }
         .btn-star:hover { background: #fde047; }
-        .btn-link { background: #0284c7; color: white; text-decoration: none; padding: 0.3rem 0.6rem; border-radius: 5px; font-size: 0.78rem; font-weight: 500; display: inline-flex; align-items: center; gap: 3px; }
+        
+        .btn-link { 
+            background: #0284c7; color: white; text-decoration: none; 
+            padding: 0.35rem 0.6rem; border-radius: 4px; font-size: 0.75rem; font-weight: 500; 
+            display: inline-flex; align-items: center; justify-content: center; gap: 3px; 
+            white-space: nowrap; word-break: keep-all;
+        }
         .btn-link:hover { background: #0369a1; }
 
         /* 오른쪽 즐겨찾기 패널 */
@@ -49,10 +117,10 @@
         .panel-title { font-weight: 700; font-size: 1rem; color: #0f172a; display: flex; align-items: center; gap: 6px; }
         .fav-list { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 0.65rem; }
         .fav-card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 0.75rem; display: flex; flex-direction: column; gap: 0.35rem; }
-        .fav-card h4 { font-size: 0.9rem; color: #0f172a; font-weight: 700; }
+        .fav-card h4 { font-size: 0.88rem; color: #0f172a; font-weight: 700; }
         .fav-card p { font-size: 0.78rem; color: #64748b; }
         .fav-actions { margin-top: 0.35rem; display: flex; justify-content: space-between; align-items: center; }
-        .btn-del { background: #ef4444; color: white; border: none; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.72rem; cursor: pointer; }
+        .btn-del { background: #ef4444; color: white; border: none; padding: 0.2rem 0.45rem; border-radius: 4px; font-size: 0.72rem; cursor: pointer; white-space: nowrap; }
         .btn-del:hover { background: #dc2626; }
         .empty-fav { text-align: center; color: #94a3b8; font-size: 0.85rem; padding-top: 3rem; }
     </style>
@@ -60,55 +128,98 @@
 <body>
 
     <div class="header">
-        <h1>🎓 전국 교육대학원 상세검색 & 즐겨찾기 <span class="badge">데이터 내장형</span></h1>
+        <h1>🎓 전국 교육대학원 상세검색 & 즐겨찾기 <span class="badge">체크박스 다중선택 적용</span></h1>
     </div>
 
     <div class="app-container">
-        <!-- 메인 검색 및 결과 영역 -->
+        <!-- 메인 영역 -->
         <main class="main-content">
-            <!-- 상세 검색 필터 (펼침 목록 + 직접 입력 포함문자 검색 겸용) -->
+            <!-- 상단 검색 카드 -->
             <div class="search-card">
                 <div class="search-grid">
                     <div class="form-group">
-                        <label for="inputUniv">대학명 (선택/입력)</label>
-                        <input type="text" id="inputUniv" list="listUniv" placeholder="선택 또는 검색어 입력" oninput="applyFilter()">
-                        <datalist id="listUniv"></datalist>
+                        <label>대학명</label>
+                        <div class="dropdown-btn" onclick="toggleDropdown('univ', event)">
+                            <span class="btn-text" id="btn-text-univ">전체 선택</span>
+                            <span class="arrow">▼</span>
+                        </div>
+                        <div class="dropdown-menu" id="menu-univ"></div>
                     </div>
                     <div class="form-group">
-                        <label for="inputDept">학과/전공명 (선택/입력)</label>
-                        <input type="text" id="inputDept" list="listDept" placeholder="선택 또는 검색어 입력" oninput="applyFilter()">
-                        <datalist id="listDept"></datalist>
+                        <label>대학구분</label>
+                        <div class="dropdown-btn" onclick="toggleDropdown('cat', event)">
+                            <span class="btn-text" id="btn-text-cat">전체 선택</span>
+                            <span class="arrow">▼</span>
+                        </div>
+                        <div class="dropdown-menu" id="menu-cat"></div>
                     </div>
                     <div class="form-group">
-                        <label for="inputCert">자격종별 (선택/입력)</label>
-                        <input type="text" id="inputCert" list="listCert" placeholder="선택 또는 검색어 입력" oninput="applyFilter()">
-                        <datalist id="listCert"></datalist>
+                        <label>설립유형</label>
+                        <div class="dropdown-btn" onclick="toggleDropdown('est', event)">
+                            <span class="btn-text" id="btn-text-est">전체 선택</span>
+                            <span class="arrow">▼</span>
+                        </div>
+                        <div class="dropdown-menu" id="menu-est"></div>
                     </div>
                     <div class="form-group">
-                        <label for="inputSubj">표시과목 (선택/입력)</label>
-                        <input type="text" id="inputSubj" list="listSubj" placeholder="선택 또는 검색어 입력" oninput="applyFilter()">
-                        <datalist id="listSubj"></datalist>
+                        <label>학과/전공명</label>
+                        <div class="dropdown-btn" onclick="toggleDropdown('dept', event)">
+                            <span class="btn-text" id="btn-text-dept">전체 선택</span>
+                            <span class="arrow">▼</span>
+                        </div>
+                        <div class="dropdown-menu" id="menu-dept"></div>
+                    </div>
+                    <div class="form-group">
+                        <label>자격종별</label>
+                        <div class="dropdown-btn" onclick="toggleDropdown('cert', event)">
+                            <span class="btn-text" id="btn-text-cert">전체 선택</span>
+                            <span class="arrow">▼</span>
+                        </div>
+                        <div class="dropdown-menu" id="menu-cert"></div>
+                    </div>
+                    <div class="form-group">
+                        <label>표시과목</label>
+                        <div class="dropdown-btn" onclick="toggleDropdown('subj', event)">
+                            <span class="btn-text" id="btn-text-subj">전체 선택</span>
+                            <span class="arrow">▼</span>
+                        </div>
+                        <div class="dropdown-menu" id="menu-subj"></div>
                     </div>
                 </div>
                 <div class="search-actions">
                     <span class="result-count" id="resultCount">검색 결과: 0건</span>
-                    <button class="btn-reset" onclick="resetFilters()">필터 초기화</button>
+                    <button class="btn-reset" onclick="resetFilters()">필터 전체 초기화</button>
                 </div>
             </div>
 
-            <!-- 검색 결과 테이블 -->
+            <!-- 결과 테이블 (헤더 하단 입력란 제거) -->
             <div class="table-container">
                 <table>
                     <thead>
                         <tr>
-                            <th>대학명</th>
-                            <th>구분</th>
-                            <th>설립</th>
-                            <th>학과명</th>
-                            <th>자격종별</th>
-                            <th>표시과목</th>
-                            <th>즐겨찾기</th>
-                            <th>입시사이트</th>
+                            <th style="width: 50px; text-align: center;">
+                                <div class="th-content" style="justify-content: center;">연번</div>
+                            </th>
+                            <th style="min-width: 120px;">
+                                <div class="th-content" onclick="sortTable(0)">대학명 <span class="sort-icon" id="sort0">⇅</span></div>
+                            </th>
+                            <th style="min-width: 85px;">
+                                <div class="th-content" onclick="sortTable(1)">구분 <span class="sort-icon" id="sort1">⇅</span></div>
+                            </th>
+                            <th style="min-width: 70px;">
+                                <div class="th-content" onclick="sortTable(2)">설립 <span class="sort-icon" id="sort2">⇅</span></div>
+                            </th>
+                            <th style="min-width: 140px;">
+                                <div class="th-content" onclick="sortTable(3)">학과명 <span class="sort-icon" id="sort3">⇅</span></div>
+                            </th>
+                            <th style="min-width: 130px;">
+                                <div class="th-content" onclick="sortTable(4)">자격종별 <span class="sort-icon" id="sort4">⇅</span></div>
+                            </th>
+                            <th style="min-width: 90px;">
+                                <div class="th-content" onclick="sortTable(5)">표시과목 <span class="sort-icon" id="sort5">⇅</span></div>
+                            </th>
+                            <th style="min-width: 85px; text-align: center;">즐겨찾기</th>
+                            <th style="min-width: 95px; text-align: center;">입시사이트</th>
                         </tr>
                     </thead>
                     <tbody id="resultTbody"></tbody>
@@ -116,7 +227,7 @@
             </div>
         </main>
 
-        <!-- 오른쪽 즐겨찾기 패널 -->
+        <!-- 즐겨찾기 패널 -->
         <aside class="right-panel">
             <div class="panel-header">
                 <div class="panel-title">⭐ 저장된 즐겨찾기 (<span id="favCount">0</span>)</div>
@@ -126,7 +237,6 @@
     </div>
 
     <script>
-        // CSV 파일 데이터 내장 ([대학명, 대학구분, 설립유형, 학과명, 자격종별, 표시과목])
         const RAW_DATA = [
             ["가천대학교", "일반대학", "사립", "교육심리및상담전공", "전문상담교사(1급)", ""],
             ["가천대학교", "일반대학", "사립", "영양교육전공", "영양교사(2급)", ""],
@@ -437,94 +547,197 @@
             ["홍익대학교", "일반대학", "사립", "상담심리전공", "전문상담교사(2급)", ""]
         ];
 
+        let currentFilteredData = [...RAW_DATA];
         let favorites = JSON.parse(localStorage.getItem('eduGradFavs')) || [];
+        let sortState = { col: null, dir: 'asc' };
 
-        // 초기화 및 datalist 구성
+        // 다중 선택 상태를 담을 개체 (Set으로 관리)
+        const filterState = {
+            univ: new Set(),
+            cat: new Set(),
+            est: new Set(),
+            dept: new Set(),
+            cert: new Set(),
+            subj: new Set()
+        };
+
+        const keys = ['univ', 'cat', 'est', 'dept', 'cert', 'subj'];
+        const colIndexes = { univ: 0, cat: 1, est: 2, dept: 3, cert: 4, subj: 5 };
+
         window.addEventListener('DOMContentLoaded', () => {
-            setupDataLists();
-            renderTable(RAW_DATA);
+            initDropdownMenus();
+            applyAllFilters();
             renderFavorites();
+
+            // 외부 클릭 시 드롭다운 닫기
+            document.addEventListener('click', (e) => {
+                if (!e.target.closest('.form-group')) {
+                    closeAllDropdowns();
+                }
+            });
         });
 
-        // 자동완성 datalist 목록 동적 세팅 (펼침 목록 생성)
-        function setupDataLists() {
-            const univs = new Set(), depts = new Set(), certs = new Set(), subjs = new Set();
+        // 드롭다운 메뉴 아이템 생성
+        function initDropdownMenus() {
+            keys.forEach(key => {
+                const colIdx = colIndexes[key];
+                const uniqueValues = Array.from(new Set(RAW_DATA.map(row => row[colIdx]).filter(val => val !== ""))).sort();
+                
+                const menuEl = document.getElementById(`menu-${key}`);
+                menuEl.innerHTML = uniqueValues.map((val, idx) => `
+                    <label class="dropdown-item">
+                        <input type="checkbox" value="${val}" onchange="onCheckboxChange('${key}', '${val}', this.checked)">
+                        <span>${val}</span>
+                    </label>
+                `).join('');
+            });
+        }
 
-            RAW_DATA.forEach(row => {
-                if (row[0]) univs.add(row[0]);
-                if (row[3]) depts.add(row[3]);
-                if (row[4]) certs.add(row[4]);
-                if (row[5]) subjs.add(row[5]);
+        // 드롭다운 열기/닫기 토글
+        function toggleDropdown(key, event) {
+            event.stopPropagation();
+            const targetMenu = document.getElementById(`menu-${key}`);
+            const isOpen = targetMenu.classList.contains('show');
+            
+            closeAllDropdowns();
+            if (!isOpen) {
+                targetMenu.classList.add('show');
+            }
+        }
+
+        function closeAllDropdowns() {
+            document.querySelectorAll('.dropdown-menu').forEach(menu => menu.classList.remove('show'));
+        }
+
+        // 체크박스 변경 이벤트 handler
+        function onCheckboxChange(key, value, isChecked) {
+            if (isChecked) {
+                filterState[key].add(value);
+            } else {
+                filterState[key].delete(value);
+            }
+            updateDropdownButtonText(key);
+            applyAllFilters();
+        }
+
+        // 드롭다운 버튼 텍스트 업데이트
+        function updateDropdownButtonText(key) {
+            const btnTextEl = document.getElementById(`btn-text-${key}`);
+            const selectedArray = Array.from(filterState[key]);
+
+            if (selectedArray.length === 0) {
+                btnTextEl.innerText = "전체 선택";
+            } else if (selectedArray.length === 1) {
+                btnTextEl.innerText = selectedArray[0];
+            } else {
+                btnTextEl.innerText = `${selectedArray[0]} 외 ${selectedArray.length - 1}개`;
+            }
+        }
+
+        // 모든 필터 적용
+        function applyAllFilters() {
+            currentFilteredData = RAW_DATA.filter(row => {
+                return keys.every(key => {
+                    const selectedSet = filterState[key];
+                    if (selectedSet.size === 0) return true;
+                    
+                    const cellVal = row[colIndexes[key]];
+                    return selectedSet.has(cellVal);
+                });
             });
 
-            fillDataList('listUniv', Array.from(univs).sort());
-            fillDataList('listDept', Array.from(depts).sort());
-            fillDataList('listCert', Array.from(certs).sort());
-            fillDataList('listSubj', Array.from(subjs).sort());
+            if (sortState.col !== null) {
+                executeSort();
+            } else {
+                renderTable(currentFilteredData);
+            }
         }
 
-        function fillDataList(elementId, items) {
-            const datalist = document.getElementById(elementId);
-            datalist.innerHTML = items.map(item => `<option value="${item}"></option>`).join('');
+        function sortTable(columnIndex) {
+            if (sortState.col === columnIndex) {
+                sortState.dir = sortState.dir === 'asc' ? 'desc' : 'asc';
+            } else {
+                sortState.col = columnIndex;
+                sortState.dir = 'asc';
+            }
+
+            for (let i = 0; i < 6; i++) {
+                const icon = document.getElementById(`sort${i}`);
+                if (i === columnIndex) {
+                    icon.innerText = sortState.dir === 'asc' ? '▲' : '▼';
+                    icon.style.color = '#2563eb';
+                } else {
+                    icon.innerText = '⇅';
+                    icon.style.color = '#94a3b8';
+                }
+            }
+
+            executeSort();
         }
 
-        // 실시간 필터링 (펼침 선택 + 부분 포함문자 동시 검색)
-        function applyFilter() {
-            const univ = document.getElementById('inputUniv').value.trim().toLowerCase();
-            const dept = document.getElementById('inputDept').value.trim().toLowerCase();
-            const cert = document.getElementById('inputCert').value.trim().toLowerCase();
-            const subj = document.getElementById('inputSubj').value.trim().toLowerCase();
+        function executeSort() {
+            const col = sortState.col;
+            const dir = sortState.dir === 'asc' ? 1 : -1;
 
-            const filtered = RAW_DATA.filter(row => {
-                const matchUniv = !univ || (row[0] && row[0].toLowerCase().includes(univ));
-                const matchDept = !dept || (row[3] && row[3].toLowerCase().includes(dept));
-                const matchCert = !cert || (row[4] && row[4].toLowerCase().includes(cert));
-                const matchSubj = !subj || (row[5] && row[5].toLowerCase().includes(subj));
-                return matchUniv && matchDept && matchCert && matchSubj;
+            currentFilteredData.sort((a, b) => {
+                const valA = (a[col] || '').toString();
+                const valB = (b[col] || '').toString();
+                return valA.localeCompare(valB, 'ko') * dir;
             });
 
-            renderTable(filtered);
+            renderTable(currentFilteredData);
         }
 
-        // 검색어 초기화
+        // 전체 초기화
         function resetFilters() {
-            document.getElementById('inputUniv').value = '';
-            document.getElementById('inputDept').value = '';
-            document.getElementById('inputCert').value = '';
-            document.getElementById('inputSubj').value = '';
-            renderTable(RAW_DATA);
+            keys.forEach(key => {
+                filterState[key].clear();
+                updateDropdownButtonText(key);
+            });
+
+            document.querySelectorAll('.dropdown-menu input[type="checkbox"]').forEach(cb => cb.checked = false);
+
+            sortState = { col: null, dir: 'asc' };
+            for (let i = 0; i < 6; i++) {
+                const icon = document.getElementById(`sort${i}`);
+                icon.innerText = '⇅';
+                icon.style.color = '#94a3b8';
+            }
+
+            closeAllDropdowns();
+            applyAllFilters();
         }
 
-        // 결과 테이블 출력
         function renderTable(data) {
             const tbody = document.getElementById('resultTbody');
             document.getElementById('resultCount').innerText = `검색 결과: ${data.length}건`;
             tbody.innerHTML = '';
 
             if (data.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; padding: 2.5rem; color: #94a3b8;">검색 결과가 없습니다. 다른 검색어를 입력해 보세요.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="9" style="text-align:center; padding: 2.5rem; color: #94a3b8;">검색 조건에 일치하는 데이터가 없습니다.</td></tr>`;
                 return;
             }
 
             const fragment = document.createDocumentFragment();
-            data.forEach(row => {
+            data.forEach((row, index) => {
                 const [univ, cat, type, dept, cert, subj] = row;
                 const portalLink = `https://search.naver.com/search.naver?query=${encodeURIComponent(univ + ' 교육대학원 입학처')}`;
                 
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
+                    <td style="text-align: center; font-weight: 600; color: #64748b; background: #f8fafc;">${index + 1}</td>
                     <td><strong>${univ}</strong></td>
                     <td>${cat || '-'}</td>
                     <td>${type || '-'}</td>
                     <td>${dept || '-'}</td>
                     <td>${cert || '-'}</td>
                     <td>${subj || '-'}</td>
-                    <td>
+                    <td style="text-align: center; white-space: nowrap;">
                         <button class="btn-star" onclick='addFavorite(${JSON.stringify(row)})'>★ 등록</button>
                     </td>
-                    <td>
+                    <td style="text-align: center; white-space: nowrap;">
                         <a href="${portalLink}" target="_blank" rel="noopener noreferrer" class="btn-link">
-                            🔗 입시사이트
+                            🔗 입학처
                         </a>
                     </td>
                 `;
@@ -533,7 +746,6 @@
             tbody.appendChild(fragment);
         }
 
-        // 즐겨찾기 추가
         function addFavorite(row) {
             const [univ, cat, type, dept, cert, subj] = row;
             const id = `${univ}_${dept}_${cert}_${subj}`;
@@ -547,7 +759,6 @@
             saveFavorites();
         }
 
-        // 즐겨찾기 삭제
         function removeFavorite(id) {
             favorites = favorites.filter(f => f.id !== id);
             saveFavorites();
@@ -558,7 +769,6 @@
             renderFavorites();
         }
 
-        // 오른쪽 패널 렌더링
         function renderFavorites() {
             const favContainer = document.getElementById('favList');
             document.getElementById('favCount').innerText = favorites.length;
