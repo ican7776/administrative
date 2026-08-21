@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>중등 2급 영어교사 자격증 취득 로드맵 & 학습 플래너</title>
+    <style>
+        :root {
+            --primary: #1e3a8a;
+            --primary-light: #3b82f6;
+            --secondary: #0d9488;
+            --bg: #f8fafc;
+            --card-bg: #ffffff;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+            --accent-yellow: #f59e0b;
+            --accent-green: #10b981;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
+            background-color: var(--bg);
+            color: var(--text-main);
+            line-height: 1.6;
+            padding: 20px;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        header {
+            background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 16px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            margin-bottom: 25px;
+        }
+
+        header h1 {
+            font-size: 1.8rem;
+            margin-bottom: 8px;
+            font-weight: 700;
+        }
+
+        header p {
+            font-size: 0.95rem;
+            opacity: 0.9;
+        }
+
+        .user-info-box {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(5px);
+            padding: 12px 18px;
+            border-radius: 8px;
+            margin-top: 15px;
+            font-size: 0.9rem;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .progress-card {
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            margin-bottom: 25px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        }
+
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+
+        .progress-bar-bg {
+            background-color: #e2e8f0;
+            height: 14px;
+            border-radius: 7px;
+            overflow: hidden;
+        }
+
+        .progress-bar-fill {
+            background: linear-gradient(90deg, var(--secondary) 0%, var(--accent-green) 100%);
+            height: 100%;
+            width: 0%;
+            transition: width 0.4s ease;
+        }
+
+        .phase-card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            margin-bottom: 20px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        }
+
+        .phase-header {
+            padding: 16px 20px;
+            background-color: #f1f5f9;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .phase-title-group {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .phase-badge {
+            background-color: var(--primary);
+            color: white;
+            font-weight: bold;
+            font-size: 0.8rem;
+            padding: 4px 10px;
+            border-radius: 20px;
+        }
+
+        .phase-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .phase-period {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+
+        .phase-body {
+            padding: 20px;
+        }
+
+        .task-list {
+            list-style: none;
+            margin-bottom: 15px;
+        }
+
+        .task-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 10px 0;
+            border-bottom: 1px dashed #f1f5f9;
+        }
+
+        .task-item:last-child {
+            border-bottom: none;
+        }
+
+        .task-item input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            margin-top: 3px;
+            cursor: pointer;
+            accent-color: var(--primary);
+        }
+
+        .task-content {
+            flex: 1;
+        }
+
+        .task-label {
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .task-desc {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        .tips-box {
+            background-color: #eff6ff;
+            border-left: 4px solid var(--primary-light);
+            padding: 12px 15px;
+            border-radius: 0 8px 8px 0;
+            font-size: 0.88rem;
+            margin-top: 15px;
+            color: #1e40af;
+        }
+
+        .tips-box strong {
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        .memo-section {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid var(--border);
+        }
+
+        .memo-section label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+        }
+
+        .memo-section textarea {
+            width: 100%;
+            height: 70px;
+            padding: 10px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-family: inherit;
+            font-size: 0.88rem;
+            resize: vertical;
+            background-color: #fafafa;
+        }
+
+        .memo-section textarea:focus {
+            outline: none;
+            border-color: var(--primary-light);
+            background-color: #fff;
+        }
+
+        footer {
+            text-align: center;
+            padding: 20px;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            margin-top: 30px;
+        }
+
+        .save-indicator {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: rgba(16, 185, 129, 0.9);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+        }
+
+        .course-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            font-size: 0.85rem;
+        }
+
+        .course-table th, .course-table td {
+            border: 1px solid var(--border);
+            padding: 8px 10px;
+            text-align: left;
+        }
+
+        .course-table th {
+            background-color: #f8fafc;
+            color: var(--primary);
+            font-weight: 700;
+        }
+
+        @media (max-width: 600px) {
+            body { padding: 10px; }
+            header { padding: 20px; }
+            .phase-header { flex-direction: column; align-items: flex-start; gap: 6px; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>🎓 중등 2급 영어교사 자격증 취득 맞춤 로드맵</h1>
+        <p>외국대학 회계학 학사 → 학점은행제(KYStudy) 영어영문학 48학점 → 교육대학원 양성과정 → 교원자격증</p>
+        <div class="user-info-box">
+            <span><strong>최종학력:</strong> 외국 4년제 대학 졸업 (회계학)</span>
+            <span><strong>이수목표:</strong> 학학 타전공 48학점 (수업 100%)</span>
+            <span><strong>소요기간:</strong> 약 3.5년~4년</span>
+        </div>
+    </header>
+
+    <!-- 진행 상황 카운터 -->
+    <div class="progress-card">
+        <div class="progress-header">
+            <span> 전체 진행률</span>
+            <span id="progress-text">0% (0 / 18 완료)</span>
+        </div>
+        <div class="progress-bar-bg">
+            <div class="progress-bar-fill" id="progress-bar"></div>
+        </div>
+    </div>
+
+    <!-- Phase 1 -->
+    <div class="phase-card">
+        <div class="phase-header">
+            <div class="phase-title-group">
+                <span class="phase-badge">Phase 1</span>
+                <span class="phase-title">외국 학력 서류 검증 & 학점은행제 학습자 등록</span>
+            </div>
+            <span class="phase-period">예상 기간: 1~2개월</span>
+        </div>
+        <div class="phase-body">
+            <ul class="task-list">
+                <li class="task-item">
+                    <input type="checkbox" id="task-1" onchange="updateProgress()">
+                    <div class="task-content">
+                        <label for="task-1" class="task-label">외국 대학 졸업증명서 & 성적증명서 아포스티유(Apostille) 발급</label>
+                        <div class="task-desc">또는 해당 국가 한국대사관/영사관의 영사확인 공증서 준비</div>
+                    </div>
+                </li>
+                <li class="task-item">
+                    <input type="checkbox" id="task-2" onchange="updateProgress()">
+                    <div class="task-content">
+                        <label for="task-2" class="task-label">국문 번역공증 서류 준비</label>
+                        <div class="task-desc">아포스티유/영사확인 받은 공문서 원본의 국문 번역공증 처리</div>
+                    </div>
+                </li>
+                <li class="task-item">
+                    <input type="checkbox" id="task-3" onchange="updateProgress()">
+                    <div class="task-content">
+                        <label for="task-3" class="task-label">출입국사실증명서 발급</label>
+                        <div class="task-desc">외국 대학 재학 기간과 일치하는 해외 체류 기간 증빙용</div>
+                    </div>
+                </li>
+                <li class="task-item">
+                    <input type="checkbox" id="task-4" onchange="updateProgress()">
+                    <div class="task-content">
+                        <label for="task-4" class="task-label">국가평생교육진흥원(CB) 학습자 등록 (학사 타전공 - 영어영문학)</label>
+                        <div class="task-desc">분기별(1, 4, 7, 10월) 학습자 등록 기간에 서류 제출 및 등록 완료</div>
+                    </div>
+                </li>
+            </ul>
+
+            <div class="tips-box">
+                <strong>💡 핵심 체크포인트</strong>
+                외국 학력 서류는 심사에 2~4주 이상 소요될 수 있으므로, 수강신청과 병행하되 10월/1월 신청 기간을 놓치지 않도록 미리 준비하세요.
+            </div>
+
+            <div class="memo-section">
+                <label for="memo-phase-1">📝 Phase 1 메모 (아포스티유 발급현황, 서류 제출일 등)</label>
+                <textarea id="memo-phase-1" placeholder="메모를 입력하면 자동 저장됩니다..." oninput="saveMemos()"></textarea>
+            </div>
+        </div>
+    </div>
+
+    <!-- Phase 2 -->
+    <div class="phase-card">
+        <div class="phase-header">
+            <div class="phase-title-group">
+                <span class="phase-badge">Phase 2</span>
+                <span class="phase-title">KYStudy(김영평생교육원) 영어영문학 48학점 수강</span>
+            </div>
+            <span class="phase-period">예상 기간: 약 1년 (2개 학기)</span>
+        </div>
+        <div class="phase-body">
+            <ul class="task-list">
+                <li class="task-item">
+                    <input type="checkbox" id="task-5" onchange="updateProgress()">
+                    <div class="task-content">
+                        <label for="task-5" class="task-label">목표 교육대학원의 '기본이수과목' 확인 및 설계</label>
+                        <div class="task-desc">지망하는 교대원(연세/고려/이화/한국외대 등)의 영어 교육 기본이수과목 지정표 미리 대조</div>
+                    </div>
+                </li>
+                <li class="task-item">
+                    <input type="checkbox" id="task-6" onchange="updateProgress()">
+                    <div class="task-content">
+                        <label for="task-6" class="task-label">KYStudy 1학기 수강 완료 (8과목 / 24학점)</label>
+                        <div class="task-desc">연간 이수 제한(학기당 최대 24학점) 준수, 온라인 수업/퀴즈/과제/시험 출석률 80% 이상 유지</div>
+                    </div>
+                </li>
+                <li class="task-item">
+                    <input type="checkbox" id="task-7" onchange="updateProgress()">
+                    <div class="task-content">
+                        <label for="task-7" class="task-label">KYStudy 2학기 수강 완료 (8과목 / 24학점)</label>
+                        <div class="task-desc">총 16과목(48학점) 100% 평가인정 수업 이수 완강 (평점 3.5/4.5 이상 권장)</div>
+                    </div>
+                </li>
+                <li class="task-item">
+                    <input type="checkbox" id="task-8" onchange="updateProgress()">
+                    <div class="task-content">
+                        <label for="task-8" class="task-label">학점인정 신청 & 영어영문학 타전공 학사 학위 신청</label>
+                        <div class="task-desc">학점인정 신청(1, 4, 7, 10월) 및 학위 신청(12~1월 또는 6~7월) 후 학위 취득</div>
+                    </div>
+                </li>
+            </ul>
+
+            <div class="tips-box">
+                <strong>📚 주요 권장 이수과목 (교대원 기본이수과목 대응)</strong>
+                <table class="course-table">
+                    <tr>
+                        <th>영역</th>
+                        <th>추천 이수 과목</th>
+                    </tr>
+                    <tr>
+                        <td>영어학 영역</td>
+                        <td>영어학개론, 영문법, 영어음성학, 영어응용어학</td>
+                    </tr>
+                    <tr>
+                        <td>영문학 영역</td>
+                        <td>영문학개론, 미국문학개론, 영국문학개론, 영미시, 영미소설</td>
+                    </tr>
+                    <tr>
+                        <td>실용영어/응용</td>
+                        <td>영작문, 시사영어, 영어회화, 영어작문연습</td>
+                    </tr>
+                </table>
+            </div>
+
+            <div class="memo-section">
+                <label for="memo-phase-2">📝 Phase 2 메모 (수강 과목 목록, 성적 관리, 수강료 내역 등)</label>
+                <textarea id="memo-phase-2" placeholder="메모를 입력하면 자동 저장됩니다..." oninput="saveMemos()"></textarea>
+            </div>
+        </div>
+    </div>
+
+    <!-- Phase 3 -->
+    <div class="phase-card">
+        <div class="phase-header">
+            <div class="phase-title-group">
+                <span class="phase-badge">Phase 3</span>
+                <span class="phase-title">교육대학원(영어교육 전공) 입시 준비 및 합격</span>
+            </div>
+            <span class="phase-period">예상 기간: 3~6개월 (상반기/하반기 전형)</span>
+        </div>
+        <div class="phase-body">
+            <ul class="task-list">
+                <li class="task-item">
+                    <input type="checkbox" id="task-9" onchange="updateProgress()">
+                    <div class="task-content">
+                        <label for="task-9" class="task-label">목표 교육대학원 모집요강 확인 및 기본이수과목 사전 심사 문의</label>
+                        <div class="task-desc">학점은행제로 이수한 48학점 중 전공 인정 가능 학점(보통 30~36학점 이상 필수) 확인</div>
+                    </div>
+                </li>
+                <li class="task-item">
+                    <input type="checkbox" id="task-10" onchange="updateProgress()">
+                    <div class="task-content">
+                        <label for="task-10" class="task-label">공인영어성적 준비 (필요 대학원 한정)</label>
+                        <div class="task-desc">TOEIC / TEPS 등 교대원별 요구 성적 보유 확인</div>
+                    </div>
+                </li>
+                <li class="task-item">
+                    <input type="checkbox" id="task-11" onchange="updateProgress()">
+                    <div class="task-content">
+                        <label for="task-11" class="task-label">전공 면접 & 필기고사 대비 공부 (영어학/영문학/영어교육학)</label>
+                        <div class="task-desc">영어학개론, 영문학개론, 영어교수법 기초 이론 및 영문 해석/면접 준비</div>
+                    </div>
+                </li>
+                <li class="task-item">
+                    <input type="checkbox" id="task-12" onchange="updateProgress()">
+                    <div class="task-content">
+                        <label for="task-12" class="task-label">연구계획서(학업계획서) 작성 및 원서 접수</label>
+                        <div class="task-desc">지원 동기, 학점은행제 이수계획, 향후 영어교육 연구 방향 서술 후 합격</div>
+                    </div>
+                </li>
+            </ul>
+
+            <div class="tips-box">
+                <strong>💡 교대원 양성과정 지원 시 필수 주의사항</strong>
+                교육대학원 입학만으로는 교원자격증이 나오지 않습니다. 반드시 **'교원자격증 취득 가능 과정(양성과정)'**으로 지원해야 하며, 학부/학점은행제에서 이수한 전공학점이 교대원 기준(보통 30~38학점 이상)을 충족해야 양성과정 대상자로 승인됩니다.
+            </div>
+
+            <div class="memo-section">
+                <label for="memo-phase-3">📝 Phase 3 메모 (지망 대학원, 면접 기출문제, 연구계획서 메모 등)</label>
+                <textarea id="memo-phase-3" placeholder="메모를 입력하면 자동 저장됩니다..." oninput="saveMemos()"></textarea>
+            </div>
+        </div>
+    </div>
+
+    <!-- Phase 4 -->
+    <div class="phase-card">
+        <div class="phase-header">
+            <div class="phase-title-group">
+                <span class="phase-badge">Phase 4</span>
+                <span class="phase-title">교육대학원 양성과정 이수 & 무시험검정 요건 충족</span>
+            </div>
+            <span class="phase-period">예상 기간: 5학기 (2.5년)</span>
+        </div>
+        <div class="phase-body">
+            <ul class="task-list">
+                <li class="task-item">
+                    <input type="checkbox" id="task-13" onchange="updateProgress()">
+                    <div class="task-content">
+                        <label for="task-13" class="task-label">전공 과목 이수 (학점은행 인정 포함 총 50학점 이상)</label>
+                        <div class="task-desc">교대원 석사 과정 전공 수업 이수 및 성적 관리 (전평균 75점/100점 이상)</div>
+                    </div>
+                </li>
+                <li class="task-item">
+                    <input type="checkbox" id="task-14" onchange="updateProgress()">
+                    <div class="task-content">
+                        <label for="task-14" class="task-label">교직 과목 이수 (22학점 이상)</label>
+                        <div class="task-desc">교직이론 12학점 + 교직소양 6학점 + 교육실습 4학점 (전평균 80점/100점 이상)</div>
+                    </div>
+                </li>
+                <li class="task-item">
+                    <input type="checkbox" id="task-15" onchange="updateProgress()">
+                    <div class="task-content">
+                        <label for="task-15" class="task-label">학교현장실습 (교생실습 4주) 이수</label>
+                        <div class="task-desc">중·고등학교 지정 및 4주간 현장 교생실습 수료</div>
+                    </div>
+                </li>
+                <li class="task-item">
+                    <input type="checkbox" id="task-16" onchange="updateProgress()">
+                    <div class="task-content">
+                        <label for="task-16" class="task-label">교직 부가 요건 모두 통과</label>
+                        <div class="task-desc">교직 적성·인성 검사 적격 2회 + 응급처치 및 심폐소생술 실습 2회 + 성희롱 예방교육 등 이수</div>
+                    </div>
+                </li>
+                <li class="task-item">
+                    <input type="checkbox" id="task-17" onchange="updateProgress()">
+                    <div class="task-content">
+                        <label for="task-17" class="task-label">석사학위 논문 심사 또는 연구보고서 통과</label>
+                        <div class="task-desc">대학원 규정에 따른 졸업 요건 충족 및 교육학 석사 학위 취득</div>
+                    </div>
+                </li>
+            </ul>
+
+            <div class="memo-section">
+                <label for="memo-phase-4">📝 Phase 4 메모 (교대원 수강과목, 교생실습 예정 학교, 실습일지 등)</label>
+                <textarea id="memo-phase-4" placeholder="메모를 입력하면 자동 저장됩니다..." oninput="saveMemos()"></textarea>
+            </div>
+        </div>
+    </div>
+
+    <!-- Phase 5 -->
+    <div class="phase-card">
+        <div class="phase-header">
+            <div class="phase-title-group">
+                <span class="phase-badge">Phase 5</span>
+                <span class="phase-title">교원자격 무시험검정 & 교사 임용 / 진로 준비</span>
+            </div>
+            <span class="phase-period">졸업 시 즉시 발급</span>
+        </div>
+        <div class="phase-body">
+            <ul class="task-list">
+                <li class="task-item">
+                    <input type="checkbox" id="task-18" onchange="updateProgress()">
+                    <div class="task-content">
+                        <label for="task-18" class="task-label">중등정교사 2급(영어) 교원자격증 최종 수령</label>
+                        <div class="task-desc">교육대학원 졸업 시 교육부 장관 명의 중등 2급 정교사 자격증 발급</div>
+                    </div>
+                </li>
+            </ul>
+
+            <div class="tips-box">
+                <strong>🎉 자격증 취득 후 진로 선택</strong>
+                <ul>
+                    <li>• <strong>국공립 중·고등학교:</strong> 중등교사 임용후보자 선정경쟁시험(임용고시) 응시 및 합격</li>
+                    <li>• <strong>사립 중·고등학교:</strong> 사립교원 법인 채용 공고 지원 (서류 + 필기 + 수업실연)</li>
+                    <li>• <strong>기타 교육 기관:</strong> 공공 교육 기관, 전문 어학원, 국제학교 교사 등</li>
+                </ul>
+            </div>
+
+            <div class="memo-section">
+                <label for="memo-phase-5">📝 Phase 5 메모 (임용고시 스터디, 사립 채용 준비 등)</label>
+                <textarea id="memo-phase-5" placeholder="메모를 입력하면 자동 저장됩니다..." oninput="saveMemos()"></textarea>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <p>본 로드맵은 외국 대학 학사 소지자의 학점은행제(KYStudy) 및 교육대학원 진학 표준 가이드에 따라 제작되었습니다.</p>
+        <p>※ 모든 설정과 작성하신 메모는 웹 브라우저(LocalStorage)에 자동 저장됩니다.</p>
+    </footer>
+
+    <div class="save-indicator" id="save-indicator">💾 저장되었습니다</div>
+
+    <script>
+        const TOTAL_TASKS = 18;
+
+        function updateProgress() {
+            let checkedCount = 0;
+            for (let i = 1; i <= TOTAL_TASKS; i++) {
+                const checkbox = document.getElementById('task-' + i);
+                if (checkbox && checkbox.checked) {
+                    checkedCount++;
+                }
+            }
+
+            const percentage = Math.round((checkedCount / TOTAL_TASKS) * 100);
+            document.getElementById('progress-bar').style.width = percentage + '%';
+            document.getElementById('progress-text').innerText = percentage + '% (' + checkedCount + ' / ' + TOTAL_TASKS + ' 완료)';
+
+            saveState();
+        }
+
+        function saveState() {
+            const state = {};
+            for (let i = 1; i <= TOTAL_TASKS; i++) {
+                const checkbox = document.getElementById('task-' + i);
+                if (checkbox) {
+                    state['task-' + i] = checkbox.checked;
+                }
+            }
+            localStorage.setItem('english_roadmap_tasks', JSON.stringify(state));
+            showSaveIndicator();
+        }
+
+        function saveMemos() {
+            const memos = {};
+            for (let i = 1; i <= 5; i++) {
+                const memoBox = document.getElementById('memo-phase-' + i);
+                if (memoBox) {
+                    memos['memo-phase-' + i] = memoBox.value;
+                }
+            }
+            localStorage.setItem('english_roadmap_memos', JSON.stringify(memos));
+            showSaveIndicator();
+        }
+
+        function loadSavedData() {
+            // Checkboxes
+            const savedTasks = localStorage.getItem('english_roadmap_tasks');
+            if (savedTasks) {
+                const state = JSON.parse(savedTasks);
+                for (let i = 1; i <= TOTAL_TASKS; i++) {
+                    const checkbox = document.getElementById('task-' + i);
+                    if (checkbox && state['task-' + i] !== undefined) {
+                        checkbox.checked = state['task-' + i];
+                    }
+                }
+            }
+
+            // Memos
+            const savedMemos = localStorage.getItem('english_roadmap_memos');
+            if (savedMemos) {
+                const memos = JSON.parse(savedMemos);
+                for (let i = 1; i <= 5; i++) {
+                    const memoBox = document.getElementById('memo-phase-' + i);
+                    if (memoBox && memos['memo-phase-' + i] !== undefined) {
+                        memoBox.value = memos['memo-phase-' + i];
+                    }
+                }
+            }
+
+            // Initial progress update
+            let checkedCount = 0;
+            for (let i = 1; i <= TOTAL_TASKS; i++) {
+                const checkbox = document.getElementById('task-' + i);
+                if (checkbox && checkbox.checked) {
+                    checkedCount++;
+                }
+            }
+            const percentage = Math.round((checkedCount / TOTAL_TASKS) * 100);
+            document.getElementById('progress-bar').style.width = percentage + '%';
+            document.getElementById('progress-text').innerText = percentage + '% (' + checkedCount + ' / ' + TOTAL_TASKS + ' 완료)';
+        }
+
+        let saveTimeout;
+        function showSaveIndicator() {
+            const indicator = document.getElementById('save-indicator');
+            indicator.style.opacity = '1';
+            clearTimeout(saveTimeout);
+            saveTimeout = setTimeout(() => {
+                indicator.style.opacity = '0';
+            }, 1500);
+        }
+
+        window.onload = loadSavedData;
+    </script>
+</body>
+</html>
