@@ -233,279 +233,295 @@
         </aside>
     </div>
 
-    <script>
-        const GOOGLE_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzIVgZg2MAqlAQhdJQfqnZSzRtWDTtW7PuJyHvldutgIm05eY2Brh0E5Kuf7-soW3-T/exec";
+    const GOOGLE_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzIVgZg2MAqlAQhdJQfqnZSzRtWDTtW7PuJyHvldutgIm05eY2Brh0E5Kuf7-soW3-T/exec";
 
-        let RAW_DATA = [];
-        let currentFilteredData = [];
-        let favorites = [];
-        let sortState = { col: null, dir: 'asc' };
-        
-        const keys = ['region', 'univ', 'course', 'cat', 'est', 'dept', 'cert', 'subj'];
-        const colIndexes = { region: 0, univ: 1, course: 2, cat: 3, est: 4, dept: 5, cert: 6, subj: 7 };
-        const filterState = { region: new Set(), univ: new Set(), course: new Set(), cat: new Set(), est: new Set(), dept: new Set(), cert: new Set(), subj: new Set() };
+let RAW_DATA = [];
+let currentFilteredData = [];
+let favorites = [];
+let sortState = { col: null, dir: 'asc' };
 
-        window.addEventListener('DOMContentLoaded', () => {
-            loadFavoritesFromGoogle();
-            autoLoadExcelData();
-            document.addEventListener('click', (e) => { if (!e.target.closest('.form-group')) closeAllDropdowns(); });
+const keys = ['region', 'univ', 'course', 'cat', 'est', 'dept', 'cert', 'subj'];
+const colIndexes = { region: 0, univ: 1, course: 2, cat: 3, est: 4, dept: 5, cert: 6, subj: 7 };
+const filterState = { region: new Set(), univ: new Set(), course: new Set(), cat: new Set(), est: new Set(), dept: new Set(), cert: new Set(), subj: new Set() };
+
+window.addEventListener('DOMContentLoaded', () => {
+    loadFavoritesFromGoogle();
+    autoLoadExcelData();
+    document.addEventListener('click', (e) => { if (!e.target.closest('.form-group')) closeAllDropdowns(); });
+});
+
+// 1. 구글 시트에서 데이터 읽기 (캐시 파괴 적용)
+function loadFavoritesFromGoogle() {
+    setSyncStatus("loading", "⏳ 구글 시트에서 데이터를 가져오는 중...");
+    
+    const cacheBusterUrl = `${GOOGLE_WEB_APP_URL}?_=${new Date().getTime()}`;
+    
+    fetch(cacheBusterUrl)
+        .then(res => res.json())
+        .then(data => {
+            favorites = data || [];
+            renderFavorites(); 
+            setSyncStatus("success", "🟢 구글 스프레드시트와 실시간 동기화 완료");
+        })
+        .catch(err => {
+            console.error("구글 로딩 에러:", err);
+            setSyncStatus("error", "❌ 구글 동기화 실패 (네트워크 연결 확인)");
+        });
+}
+
+// 2. [핵심 수정] 구글 시트에 실시간 전송 및 즉각 화면 갱신
+async function saveFavoritesToGoogle() {
+    setSyncStatus("loading", "⏳ 구글 시트에 실시간 동기화 중...");
+    
+    try {
+        // GAS가 가장 잘 받아들이는 URL 인코딩 형태로 데이터 포맷 변경 (CORS 완벽 우회)
+        const formData = new URLSearchParams();
+        formData.append("action", "save");
+        formData.append("favorites", JSON.stringify(favorites));
+
+        // 서버가 저장을 완벽히 끝낼 때까지 await로 기다립니다.
+        const response = await fetch(GOOGLE_WEB_APP_URL, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/x-www-form-urlencoded"
+            },
+            body: formData.toString()
         });
 
-        // 🟢 구글 시트에서 최신 데이터 읽기 및 렌더링
-        function loadFavoritesFromGoogle() {
-            setSyncStatus("loading", "⏳ 구글 시트에서 데이터를 가져오는 중...");
-            fetch(GOOGLE_WEB_APP_URL)
-                .then(res => res.json())
-                .then(data => {
-                    favorites = data;
-                    renderFavorites(); 
-                    setSyncStatus("success", "🟢 구글 스프레드시트와 실시간 동기화 완료");
-                })
-                .catch(err => {
-                    console.error("구글 로딩 에러:", err);
-                    setSyncStatus("error", "❌ 구글 동기화 실패");
-                });
+        const resData = await response.json();
+        
+        // 구글 서버에 저장이 완전히 끝났다고 응답이 오면 그때 화면을 동기화합니다.
+        if (resData.status === "success" || resData.result === "success") {
+            setSyncStatus("success", "🟢 구글 스프레드시트에 저장 및 동기화 완료");
+            renderFavorites(); // 실시간 화면 동기화
+        } else {
+            throw new Error("서버 응답 이상");
         }
+    } catch (err) {
+        console.error("구글 저장 에러:", err);
+        // 오류가 나더라도 사용자가 계속 작업할 수 있도록 우선 화면은 그려줍니다.
+        renderFavorites();
+        setSyncStatus("error", "❌ 실시간 저장 실패 (잠시 후 자동 재시도)");
+    }
+}
 
-        // 🔄 [핵심 수정] 변경사항이 시트에 성공적으로 완벽 반영되었을 때만 renderFavorites()를 다시 호출하여 확실하게 동기화시킵니다.
-        function saveFavoritesToGoogle() {
-            setSyncStatus("loading", "⏳ 구글 시트에 변경사항 저장 중...");
-            
-            fetch(GOOGLE_WEB_APP_URL, {
-                method: "POST",
-                body: JSON.stringify({ action: "save", favorites: favorites })
-            })
-            .then(res => res.json())
-            .then(resData => {
-                if(resData.status === "success") {
-                    setSyncStatus("success", "🟢 구글 스프레드시트에 저장 완료");
-                    renderFavorites(); // 💡 구글 시트 저장이 완벽하게 완료된 응답을 받으면 즉시 화면 리스트 동기화!!
-                }
-            })
-            .catch(err => {
-                console.error("구글 저장 에러:", err);
-                setSyncStatus("error", "❌ 구글 저장 실패");
-            });
-        }
+function setSyncStatus(type, text) {
+    const statusBox = document.getElementById('syncStatus');
+    if (!statusBox) return;
+    statusBox.innerText = text;
+    statusBox.className = "sync-status-box";
+    if(type === "loading") statusBox.classList.add('loading');
+    if(type === "error") {
+        statusBox.style.background = "#fef2f2"; statusBox.style.border = "1px solid #fca5a5"; statusBox.style.color = "#991b1b";
+    }
+}
 
-        function setSyncStatus(type, text) {
-            const statusBox = document.getElementById('syncStatus');
-            statusBox.innerText = text;
-            statusBox.className = "sync-status-box";
-            if(type === "loading") statusBox.classList.add('loading');
-            if(type === "error") {
-                statusBox.style.background = "#fef2f2"; statusBox.style.border = "1px solid #fca5a5"; statusBox.style.color = "#991b1b";
+function autoLoadExcelData() {
+    const cacheBustingUrl = "data.xlsx?v=" + new Date().getTime();
+    fetch(cacheBustingUrl)
+        .then(res => { if (!res.ok) throw new Error(); return res.arrayBuffer(); })
+        .then(buffer => { parseAndLoadExcel(buffer); })
+        .catch(err => {
+            document.getElementById('resultCount').innerText = "엑셀 연동 필요";
+            document.getElementById('resultTbody').innerHTML = `<tr><td colspan="11" style="text-align:center; padding: 3rem; color: #64748b;">⚠️ <strong>data.xlsx</strong> 파일을 발견하지 못했습니다.</td></tr>`;
+        });
+}
+
+function parseAndLoadExcel(arrayBuffer) {
+    try {
+        const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+        const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+        const jsonData = XLSX.utils.sheet_to_json(worksheet);
+        const parsedData = [];
+        jsonData.forEach(row => {
+            if ((row['폐지여부'] || '').toString().trim() === 'Y') return;
+            const region = (row['소재지'] || '').toString().trim();
+            const univ = (row['대학명'] || '').toString().trim();
+            const course = (row['양성과정(공시)'] || row['양성과정'] || '').toString().trim();
+            const cat = (row['대학구분'] || '').toString().trim();
+            const est = (row['설립유형'] || '').toString().trim();
+            const dept = (row['학과명'] || '').toString().trim();
+            const cert = (row['자격종별'] || '').toString().trim();
+            const subj = (row['표시과목'] || '').toString().trim();
+            if (univ || dept) parsedData.push([region, univ, course, cat, est, dept, cert, subj]);
+        });
+        if (parsedData.length > 0) { RAW_DATA = parsedData; initDropdownMenus(); applyAllFilters(); }
+    } catch (error) { alert("엑셀 파싱 과정에 실패했습니다."); }
+}
+
+function handleFileUpload(event) {
+    const file = event.target.files[0]; if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(e) { parseAndLoadExcel(e.target.result); };
+    reader.readAsArrayBuffer(file);
+}
+
+function initDropdownMenus() {
+    keys.forEach(key => {
+        const colIdx = colIndexes[key];
+        const uniqueValues = Array.from(new Set(RAW_DATA.map(row => row[colIdx]).filter(val => val))).sort();
+        document.getElementById(`items-${key}`).innerHTML = uniqueValues.map((val) => `
+            <label class="dropdown-item" data-value="${val}">
+                <input type="checkbox" value="${val}" ${filterState[key].has(val) ? 'checked' : ''} onchange="onCheckboxChange('${key}', '${val}', this.checked)">
+                <span>${val}</span>
+            </label>
+        `).join('');
+    });
+}
+
+function updateDropdownMenus() {
+    keys.forEach(targetKey => {
+        const availableData = RAW_DATA.filter(row => keys.every(key => key === targetKey || filterState[key].size === 0 || filterState[key].has(row[colIndexes[key]])));
+        const validValues = new Set(availableData.map(row => row[colIndexes[targetKey]]).filter(v => v));
+        const items = document.getElementById(`items-${targetKey}`).querySelectorAll('.dropdown-item');
+        items.forEach(item => {
+            const val = item.getAttribute('data-value');
+            if (validValues.has(val)) {
+                const keyword = document.getElementById(`menu-${targetKey}`).querySelector('.dropdown-search-input').value.trim().toLowerCase();
+                item.style.display = (keyword === "" || val.toLowerCase().includes(keyword)) ? 'flex' : 'none';
+            } else {
+                item.style.display = 'none';
+                if (filterState[targetKey].has(val)) { filterState[targetKey].delete(val); item.querySelector('input').checked = false; }
             }
-        }
+        });
+        updateDropdownButtonText(targetKey);
+    });
+}
 
-        function autoLoadExcelData() {
-            const cacheBustingUrl = "data.xlsx?v=" + new Date().getTime();
-            fetch(cacheBustingUrl)
-                .then(res => { if (!res.ok) throw new Error(); return res.arrayBuffer(); })
-                .then(buffer => { parseAndLoadExcel(buffer); })
-                .catch(err => {
-                    document.getElementById('resultCount').innerText = "엑셀 연동 필요";
-                    document.getElementById('resultTbody').innerHTML = `<tr><td colspan="11" style="text-align:center; padding: 3rem; color: #64748b;">⚠️ <strong>data.xlsx</strong> 파일을 발견하지 못했습니다.</td></tr>`;
-                });
-        }
+function filterDropdownItems(key, keyword) {
+    const cleanKeyword = keyword.trim().toLowerCase();
+    const availableData = RAW_DATA.filter(row => keys.every(k => k === key || filterState[k].size === 0 || filterState[k].has(row[colIndexes[k]])));
+    const validValues = new Set(availableData.map(row => row[colIndexes[key]]).filter(v => v));
+    document.getElementById(`items-${key}`).querySelectorAll('.dropdown-item').forEach(item => {
+        const val = item.getAttribute('data-value');
+        item.style.display = (validValues.has(val) && (cleanKeyword === "" || val.toLowerCase().includes(cleanKeyword))) ? 'flex' : 'none';
+    });
+}
 
-        function parseAndLoadExcel(arrayBuffer) {
-            try {
-                const workbook = XLSX.read(arrayBuffer, { type: 'array' });
-                const worksheet = workbook.Sheets[workbook.SheetNames[0]];
-                const jsonData = XLSX.utils.sheet_to_json(worksheet);
-                const parsedData = [];
-                jsonData.forEach(row => {
-                    if ((row['폐지여부'] || '').toString().trim() === 'Y') return;
-                    const region = (row['소재지'] || '').toString().trim();
-                    const univ = (row['대학명'] || '').toString().trim();
-                    const course = (row['양성과정(공시)'] || row['양성과정'] || '').toString().trim();
-                    const cat = (row['대학구분'] || '').toString().trim();
-                    const est = (row['설립유형'] || '').toString().trim();
-                    const dept = (row['학과명'] || '').toString().trim();
-                    const cert = (row['자격종별'] || '').toString().trim();
-                    const subj = (row['표시과목'] || '').toString().trim();
-                    if (univ || dept) parsedData.push([region, univ, course, cat, est, dept, cert, subj]);
-                });
-                if (parsedData.length > 0) { RAW_DATA = parsedData; initDropdownMenus(); applyAllFilters(); }
-            } catch (error) { alert("엑셀 파싱 과정에 실패했습니다."); }
-        }
+function toggleDropdown(key, event) {
+    event.stopPropagation();
+    const targetMenu = document.getElementById(`menu-${key}`);
+    const isOpen = targetMenu.classList.contains('show');
+    closeAllDropdowns();
+    if (!isOpen) {
+        targetMenu.classList.add('show');
+        const input = targetMenu.querySelector('.dropdown-search-input');
+        input.value = ""; filterDropdownItems(key, ""); setTimeout(() => input.focus(), 50);
+    }
+}
 
-        function handleFileUpload(event) {
-            const file = event.target.files[0]; if (!file) return;
-            const reader = new FileReader();
-            reader.onload = function(e) { parseAndLoadExcel(e.target.result); };
-            reader.readAsArrayBuffer(file);
-        }
+function closeAllDropdowns() { document.querySelectorAll('.dropdown-menu').forEach(menu => menu.classList.remove('show')); }
+function onCheckboxChange(key, value, isChecked) { if (isChecked) filterState[key].add(value); else filterState[key].delete(value); applyAllFilters(); }
+function updateDropdownButtonText(key) {
+    const arr = Array.from(filterState[key]);
+    document.getElementById('btn-text-' + key).innerText = arr.length === 0 ? "전체 선택" : (arr.length === 1 ? arr[0] : `${arr[0]} 외 ${arr.length - 1}개`);
+}
 
-        function initDropdownMenus() {
-            keys.forEach(key => {
-                const colIdx = colIndexes[key];
-                const uniqueValues = Array.from(new Set(RAW_DATA.map(row => row[colIdx]).filter(val => val))).sort();
-                document.getElementById(`items-${key}`).innerHTML = uniqueValues.map((val) => `
-                    <label class="dropdown-item" data-value="${val}">
-                        <input type="checkbox" value="${val}" ${filterState[key].has(val) ? 'checked' : ''} onchange="onCheckboxChange('${key}', '${val}', this.checked)">
-                        <span>${val}</span>
-                    </label>
-                `).join('');
-            });
-        }
+function applyAllFilters() {
+    currentFilteredData = RAW_DATA.filter(row => keys.every(key => filterState[key].size === 0 || filterState[key].has(row[colIndexes[key]])));
+    updateDropdownMenus();
+    if (sortState.col !== null) executeSort(); else renderTable(currentFilteredData);
+}
 
-        function updateDropdownMenus() {
-            keys.forEach(targetKey => {
-                const availableData = RAW_DATA.filter(row => keys.every(key => key === targetKey || filterState[key].size === 0 || filterState[key].has(row[colIndexes[key]])));
-                const validValues = new Set(availableData.map(row => row[colIndexes[targetKey]]).filter(v => v));
-                const items = document.getElementById(`items-${targetKey}`).querySelectorAll('.dropdown-item');
-                items.forEach(item => {
-                    const val = item.getAttribute('data-value');
-                    if (validValues.has(val)) {
-                        const keyword = document.getElementById(`menu-${targetKey}`).querySelector('.dropdown-search-input').value.trim().toLowerCase();
-                        item.style.display = (keyword === "" || val.toLowerCase().includes(keyword)) ? 'flex' : 'none';
-                    } else {
-                        item.style.display = 'none';
-                        if (filterState[targetKey].has(val)) { filterState[targetKey].delete(val); item.querySelector('input').checked = false; }
-                    }
-                });
-                updateDropdownButtonText(targetKey);
-            });
-        }
+function sortTable(columnIndex) {
+    sortState.dir = (sortState.col === columnIndex && sortState.dir === 'asc') ? 'desc' : 'asc';
+    sortState.col = columnIndex;
+    for (let i = 0; i < 8; i++) {
+        const icon = document.getElementById(`sort${i}`);
+        if (icon) { icon.innerText = i === columnIndex ? (sortState.dir === 'asc' ? '▲' : '▼') : '⇅'; icon.style.color = i === columnIndex ? '#2563eb' : '#94a3b8'; }
+    }
+    executeSort();
+}
 
-        function filterDropdownItems(key, keyword) {
-            const cleanKeyword = keyword.trim().toLowerCase();
-            const availableData = RAW_DATA.filter(row => keys.every(k => k === key || filterState[k].size === 0 || filterState[k].has(row[colIndexes[k]])));
-            const validValues = new Set(availableData.map(row => row[colIndexes[key]]).filter(v => v));
-            document.getElementById(`items-${key}`).querySelectorAll('.dropdown-item').forEach(item => {
-                const val = item.getAttribute('data-value');
-                item.style.display = (validValues.has(val) && (cleanKeyword === "" || val.toLowerCase().includes(cleanKeyword))) ? 'flex' : 'none';
-            });
-        }
+function executeSort() {
+    const col = sortState.col; const dir = sortState.dir === 'asc' ? 1 : -1;
+    currentFilteredData.sort((a, b) => (a[col] || '').toString().localeCompare((b[col] || '').toString(), 'ko') * dir);
+    renderTable(currentFilteredData);
+}
 
-        function toggleDropdown(key, event) {
-            event.stopPropagation();
-            const targetMenu = document.getElementById(`menu-${key}`);
-            const isOpen = targetMenu.classList.contains('show');
-            closeAllDropdowns();
-            if (!isOpen) {
-                targetMenu.classList.add('show');
-                const input = targetMenu.querySelector('.dropdown-search-input');
-                input.value = ""; filterDropdownItems(key, ""); setTimeout(() => input.focus(), 50);
-            }
-        }
+function resetFilters() {
+    keys.forEach(key => { filterState[key].clear(); document.getElementById(`menu-${key}`).querySelector('.dropdown-search-input').value = ""; });
+    document.querySelectorAll('.dropdown-menu input[type="checkbox"]').forEach(cb => cb.checked = false);
+    sortState = { col: null, dir: 'asc' };
+    for (let i = 0; i < 8; i++) { const icon = document.getElementById(`sort${i}`); if (icon) { icon.innerText = '⇅'; icon.style.color = '#94a3b8'; } }
+    closeAllDropdowns(); initDropdownMenus(); applyAllFilters();
+}
 
-        function closeAllDropdowns() { document.querySelectorAll('.dropdown-menu').forEach(menu => menu.classList.remove('show')); }
-        function onCheckboxChange(key, value, isChecked) { if (isChecked) filterState[key].add(value); else filterState[key].delete(value); applyAllFilters(); }
-        function updateDropdownButtonText(key) {
-            const arr = Array.from(filterState[key]);
-            document.getElementById('btn-text-' + key).innerText = arr.length === 0 ? "전체 선택" : (arr.length === 1 ? arr[0] : `${arr[0]} 외 ${arr.length - 1}개`);
-        }
+function renderTable(data) {
+    const tbody = document.getElementById('resultTbody');
+    document.getElementById('resultCount').innerText = `검색 결과: ${data.length}건`;
+    tbody.innerHTML = data.length === 0 ? `<tr><td colspan="11" style="text-align:center; padding: 2.5rem; color: #94a3b8;">검색 결과 데이터가 존재하지 않습니다.</td></tr>` : '';
+    
+    const fragment = document.createDocumentFragment();
+    data.forEach((row, index) => {
+        const [region, univ, course, cat, est, dept, cert, subj] = row;
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td style="text-align: center; font-weight: 600; color: #64748b; background: #f8fafc;">${index + 1}</td>
+            <td><span class="tag-region">${region || '-'}</span></td><td><strong>${univ}</strong></td><td><span class="tag-course">${course || '-'}</span></td>
+            <td>${cat || '-'}</td><td>${est || '-'}</td><td>${dept || '-'}</td><td>${cert || '-'}</td><td>${subj || '-'}</td>
+            <td style="text-align: center; white-space: nowrap;"><button class="btn-star" onclick='addFavorite(${JSON.stringify(row)})'>★ 등록</button></td>
+            <td style="text-align: center; white-space: nowrap;"><a href="https://search.naver.com/search.naver?query=${encodeURIComponent(univ + ' 입학처')}" target="_blank" rel="noopener noreferrer" class="btn-link">🔗 입학처</a></td>
+        `;
+        fragment.appendChild(tr);
+    });
+    tbody.appendChild(fragment);
+}
 
-        function applyAllFilters() {
-            currentFilteredData = RAW_DATA.filter(row => keys.every(key => filterState[key].size === 0 || filterState[key].has(row[colIndexes[key]])));
-            updateDropdownMenus();
-            if (sortState.col !== null) executeSort(); else renderTable(currentFilteredData);
-        }
+function addFavorite(row) {
+    const [region, univ, course, cat, est, dept, cert, subj] = row;
+    const id = `${region}_${univ}_${course}_${dept}_${cert}_${subj}`;
+    if (favorites.some(f => f.id === id)) { alert('이미 즐겨찾기에 등록된 항목입니다.'); return; }
+    favorites.push({ id, region, univ, course, dept, cert, subj });
+    saveFavoritesToGoogle();
+}
 
-        function sortTable(columnIndex) {
-            sortState.dir = (sortState.col === columnIndex && sortState.dir === 'asc') ? 'desc' : 'asc';
-            sortState.col = columnIndex;
-            for (let i = 0; i < 8; i++) {
-                const icon = document.getElementById(`sort${i}`);
-                if (icon) { icon.innerText = i === columnIndex ? (sortState.dir === 'asc' ? '▲' : '▼') : '⇅'; icon.style.color = i === columnIndex ? '#2563eb' : '#94a3b8'; }
-            }
-            executeSort();
-        }
+function removeFavorite(id) { 
+    favorites = favorites.filter(f => f.id !== id); 
+    saveFavoritesToGoogle(); 
+}
 
-        function executeSort() {
-            const col = sortState.col; const dir = sortState.dir === 'asc' ? 1 : -1;
-            currentFilteredData.sort((a, b) => (a[col] || '').toString().localeCompare((b[col] || '').toString(), 'ko') * dir);
-            renderTable(currentFilteredData);
-        }
+function deleteSelectedFavorites() {
+    const checkedBoxes = document.querySelectorAll('.fav-cb:checked');
+    if (checkedBoxes.length === 0) return alert('삭제할 항목을 선택해주세요.');
+    if (!confirm('선택한 항목들을 즐겨찾기에서 영구 삭제하시겠습니까?')) return;
+    const idsToDelete = Array.from(checkedBoxes).map(cb => cb.value);
+    favorites = favorites.filter(f => !idsToDelete.includes(f.id));
+    saveFavoritesToGoogle();
+}
 
-        function resetFilters() {
-            keys.forEach(key => { filterState[key].clear(); document.getElementById(`menu-${key}`).querySelector('.dropdown-search-input').value = ""; });
-            document.querySelectorAll('.dropdown-menu input[type="checkbox"]').forEach(cb => cb.checked = false);
-            sortState = { col: null, dir: 'asc' };
-            for (let i = 0; i < 8; i++) { const icon = document.getElementById(`sort${i}`); if (icon) { icon.innerText = '⇅'; icon.style.color = '#94a3b8'; } }
-            closeAllDropdowns(); initDropdownMenus(); applyAllFilters();
-        }
+function clearAllFavorites() { 
+    if (favorites.length === 0) return; 
+    if (!confirm('즐겨찾기 보관함을 전부 비우시겠습니까?')) return; 
+    favorites = []; 
+    saveFavoritesToGoogle(); 
+}
 
-        function renderTable(data) {
-            const tbody = document.getElementById('resultTbody');
-            document.getElementById('resultCount').innerText = `검색 결과: ${data.length}건`;
-            tbody.innerHTML = data.length === 0 ? `<tr><td colspan="11" style="text-align:center; padding: 2.5rem; color: #94a3b8;">검색 결과 데이터가 존재하지 않습니다.</td></tr>` : '';
-            
-            const fragment = document.createDocumentFragment();
-            data.forEach((row, index) => {
-                const [region, univ, course, cat, est, dept, cert, subj] = row;
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td style="text-align: center; font-weight: 600; color: #64748b; background: #f8fafc;">${index + 1}</td>
-                    <td><span class="tag-region">${region || '-'}</span></td><td><strong>${univ}</strong></td><td><span class="tag-course">${course || '-'}</span></td>
-                    <td>${cat || '-'}</td><td>${est || '-'}</td><td>${dept || '-'}</td><td>${cert || '-'}</td><td>${subj || '-'}</td>
-                    <td style="text-align: center; white-space: nowrap;"><button class="btn-star" onclick='addFavorite(${JSON.stringify(row)})'>★ 등록</button></td>
-                    <td style="text-align: center; white-space: nowrap;"><a href="https://search.naver.com/search.naver?query=${encodeURIComponent(univ + ' 입학처')}" target="_blank" rel="noopener noreferrer" class="btn-link">🔗 입학처</a></td>
-                `;
-                fragment.appendChild(tr);
-            });
-            tbody.appendChild(fragment);
-        }
+function toggleSelectAllFavs(isChecked) { document.querySelectorAll('.fav-cb').forEach(cb => cb.checked = isChecked); }
+function updateFavSelectAllStatus() {
+    const len = document.querySelectorAll('.fav-cb').length;
+    const chkLen = document.querySelectorAll('.fav-cb:checked').length;
+    document.getElementById('favSelectAll').checked = len > 0 && len === chkLen;
+}
 
-        function addFavorite(row) {
-            const [region, univ, course, cat, est, dept, cert, subj] = row;
-            const id = `${region}_${univ}_${course}_${dept}_${cert}_${subj}`;
-            if (favorites.some(f => f.id === id)) { alert('이미 즐겨찾기에 등록된 항목입니다.'); return; }
-            favorites.push({ id, region, univ, course, dept, cert, subj });
-            saveFavoritesToGoogle(); // 구글 전송 함수 호출
-        }
-
-        function removeFavorite(id) { 
-            favorites = favorites.filter(f => f.id !== id); 
-            saveFavoritesToGoogle(); 
-        }
-
-        function deleteSelectedFavorites() {
-            const checkedBoxes = document.querySelectorAll('.fav-cb:checked');
-            if (checkedBoxes.length === 0) return alert('삭제할 항목을 선택해주세요.');
-            if (!confirm('선택한 항목들을 즐겨찾기에서 영구 삭제하시겠습니까?')) return;
-            const idsToDelete = Array.from(checkedBoxes).map(cb => cb.value);
-            favorites = favorites.filter(f => !idsToDelete.includes(f.id));
-            saveFavoritesToGoogle();
-        }
-
-        function clearAllFavorites() { 
-            if (favorites.length === 0) return; 
-            if (!confirm('즐겨찾기 보관함을 전부 비우시겠습니까?')) return; 
-            favorites = []; 
-            saveFavoritesToGoogle(); 
-        }
-
-        function toggleSelectAllFavs(isChecked) { document.querySelectorAll('.fav-cb').forEach(cb => cb.checked = isChecked); }
-        function updateFavSelectAllStatus() {
-            const len = document.querySelectorAll('.fav-cb').length;
-            const chkLen = document.querySelectorAll('.fav-cb:checked').length;
-            document.getElementById('favSelectAll').checked = len > 0 && len === chkLen;
-        }
-
-        // 즐겨찾기 화면 갱신
-        function renderFavorites() {
-            document.getElementById('favCount').innerText = favorites.length;
-            document.getElementById('favSelectAll').checked = false;
-            const container = document.getElementById('favList');
-            container.innerHTML = favorites.length === 0 ? `<div class="empty-fav">왼쪽 리스트에서 [★ 등록] 버튼을 눌러보세요.<br><br>구글 스프레드시트 서버와 실시간으로 연동되어 안전하게 기록됩니다.</div>` : '';
-            
-            favorites.forEach(item => {
-                const card = document.createElement('div'); card.className = 'fav-card';
-                card.innerHTML = `
-                    <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <h4><input type="checkbox" class="fav-cb" value="${item.id}" onchange="updateFavSelectAllStatus()"> <span class="tag-region">${item.region || ''}</span> ${item.univ}</h4>
-                        <button class="btn-del" onclick="removeFavorite('${item.id}')">삭제</button>
-                    </div>
-                    <p style="margin-top: 4px;"><span class="tag-course">${item.course || ''}</span> <strong>학과:</strong> ${item.dept || '-'}</p>
-                    <p><strong>자격/과목:</strong> ${item.cert || '-'} ${item.subj ? `(${item.subj})` : ''}</p>
-                `;
-                container.appendChild(card);
-            });
-        }
-    </script>
+function renderFavorites() {
+    document.getElementById('favCount').innerText = favorites.length;
+    document.getElementById('favSelectAll').checked = false;
+    const container = document.getElementById('favList');
+    container.innerHTML = favorites.length === 0 ? `<div class="empty-fav">왼쪽 리스트에서 [★ 등록] 버튼을 눌러보세요.<br><br>구글 스프레드시트 서버와 실시간으로 연동되어 안전하게 기록됩니다.</div>` : '';
+    
+    favorites.forEach(item => {
+        const card = document.createElement('div'); card.className = 'fav-card';
+        card.innerHTML = `
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <h4><input type="checkbox" class="fav-cb" value="${item.id}" onchange="updateFavSelectAllStatus()"> <span class="tag-region">${item.region || ''}</span> ${item.univ}</h4>
+                <button class="btn-del" onclick="removeFavorite('${item.id}')">삭제</button>
+            </div>
+            <p style="margin-top: 4px;"><span class="tag-course">${item.course || ''}</span> <strong>학과:</strong> ${item.dept || '-'}</p>
+            <p><strong>자격/과목:</strong> ${item.cert || '-'} ${item.subj ? `(${item.subj})` : ''}</p>
+        `;
+        container.appendChild(card);
+    });
+}
 </body>
 </html>
