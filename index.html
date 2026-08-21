@@ -14,7 +14,30 @@
         .header { background: #0f172a; color: white; padding: 0.85rem 1.5rem; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
         .header h1 { font-size: 1.15rem; font-weight: 700; display: flex; align-items: center; gap: 8px; }
         .header .badge { background: #2563eb; font-size: 0.75rem; padding: 2px 8px; border-radius: 12px; font-weight: normal; }
-        .file-upload-btn { background: #16a34a; color: white; border: none; padding: 0.4rem 0.8rem; border-radius: 6px; font-size: 0.8rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px; }
+        .header-actions { display: flex; align-items: center; gap: 10px; }
+        
+        /* 로드맵 강조 버튼 스타일 */
+        .roadmap-btn { 
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); 
+            color: white; 
+            text-decoration: none; 
+            padding: 0.45rem 0.9rem; 
+            border-radius: 6px; 
+            font-size: 0.82rem; 
+            font-weight: 700; 
+            display: inline-flex; 
+            align-items: center; 
+            gap: 6px; 
+            box-shadow: 0 2px 8px rgba(245, 158, 11, 0.4); 
+            transition: all 0.2s ease;
+        }
+        .roadmap-btn:hover { 
+            background: linear-gradient(135deg, #d97706 0%, #b45309 100%); 
+            transform: translateY(-1px); 
+            box-shadow: 0 4px 12px rgba(245, 158, 11, 0.6); 
+        }
+
+        .file-upload-btn { background: #16a34a; color: white; border: none; padding: 0.45rem 0.85rem; border-radius: 6px; font-size: 0.82rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px; }
         .file-upload-btn:hover { background: #15803d; }
 
         /* 레이아웃 */
@@ -166,7 +189,9 @@
 
     <div class="header">
         <h1>🎓 전국 교원양성기관 통합 검색 & 즐겨찾기 <span class="badge">2024년 5월 기준</span></h1>
-        <div>
+        <div class="header-actions">
+            <!-- 로드맵 연동 버튼 -->
+            <a href="loadmap.html" target="_blank" class="roadmap-btn">🗺️ 자격증 취득 로드맵</a>
             <button class="file-upload-btn" onclick="document.getElementById('excelFileInput').click()">📂 엑셀 수동 연동</button>
             <input type="file" id="excelFileInput" accept=".xlsx, .xls" style="display: none;" onchange="handleFileUpload(event)">
         </div>
@@ -422,7 +447,6 @@
             reader.readAsArrayBuffer(file);
         }
 
-        // 초기화 시 아이템 컨테이너 내부에 목록 주입
         function initDropdownMenus() {
             keys.forEach(key => {
                 const colIdx = colIndexes[key];
@@ -439,7 +463,6 @@
             });
         }
 
-        // 연쇄 필터링 기능 연동 유지
         function updateDropdownMenus() {
             keys.forEach(targetKey => {
                 const availableData = RAW_DATA.filter(row => {
@@ -463,7 +486,6 @@
                     const val = item.getAttribute('data-value');
 
                     if (validValues.has(val)) {
-                        // 노출 가능 데이터이면서 현재 상단 직접입력 검색 키워드 매칭 상태 확인 필요
                         const menuEl = document.getElementById(`menu-${targetKey}`);
                         const searchInput = menuEl.querySelector('.dropdown-search-input');
                         const keyword = searchInput ? searchInput.value.trim().toLowerCase() : "";
@@ -486,14 +508,12 @@
             });
         }
 
-        // 직접 입력 실시간 필터 기능 함수
         function filterDropdownItems(key, keyword) {
             const cleanKeyword = keyword.trim().toLowerCase();
             const containerEl = document.getElementById(`items-${key}`);
             if (!containerEl) return;
             const items = containerEl.querySelectorAll('.dropdown-item');
 
-            // 연쇄 필터 상 현재 활성화 가능한 유효 값셋 계산
             const availableData = RAW_DATA.filter(row => {
                 return keys.every(k => {
                     if (k === key) return true;
@@ -506,7 +526,6 @@
 
             items.forEach(item => {
                 const val = item.getAttribute('data-value');
-                // 연쇄 필터 조건과 검색창 키워드 검색 조건을 동시 충족하는지 검사
                 if (validValues.has(val) && (cleanKeyword === "" || val.toLowerCase().includes(cleanKeyword))) {
                     item.style.display = 'flex';
                 } else {
@@ -524,11 +543,10 @@
             
             if (!isOpen) {
                 targetMenu.classList.add('show');
-                // 드롭다운 열릴 때 검색창 초기화 및 자동 포커스
                 const searchInput = targetMenu.querySelector('.dropdown-search-input');
                 if (searchInput) {
                     searchInput.value = "";
-                    filterDropdownItems(key, ""); // 목록 전체 다시 보이기 처리
+                    filterDropdownItems(key, "");
                     setTimeout(() => searchInput.focus(), 50);
                 }
             }
