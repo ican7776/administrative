@@ -57,7 +57,7 @@
             top: 100%;
             left: 0;
             right: 0;
-            max-height: 220px;
+            max-height: 260px;
             overflow-y: auto;
             background: white;
             border: 1px solid #cbd5e1;
@@ -68,6 +68,23 @@
             margin-top: 4px;
         }
         .dropdown-menu.show { display: block; }
+        
+        /* 직접 입력 검색창 스타일 */
+        .dropdown-search-input {
+            width: 100%;
+            padding: 0.4rem 0.5rem;
+            margin-bottom: 0.4rem;
+            border: 1px solid #cbd5e1;
+            border-radius: 4px;
+            font-size: 0.78rem;
+            outline: none;
+        }
+        .dropdown-search-input:focus { border-color: #2563eb; }
+
+        .dropdown-items-container {
+            max-height: 180px;
+            overflow-y: auto;
+        }
         
         .dropdown-item {
             display: flex;
@@ -167,7 +184,10 @@
                             <span class="btn-text" id="btn-text-region">전체 선택</span>
                             <span class="arrow">▼</span>
                         </div>
-                        <div class="dropdown-menu" id="menu-region"></div>
+                        <div class="dropdown-menu" id="menu-region">
+                            <input type="text" class="dropdown-search-input" placeholder="직접 입력 검색..." oninput="filterDropdownItems('region', this.value)">
+                            <div class="dropdown-items-container" id="items-region"></div>
+                        </div>
                     </div>
                     <div class="form-group">
                         <label>대학명</label>
@@ -175,7 +195,10 @@
                             <span class="btn-text" id="btn-text-univ">전체 선택</span>
                             <span class="arrow">▼</span>
                         </div>
-                        <div class="dropdown-menu" id="menu-univ"></div>
+                        <div class="dropdown-menu" id="menu-univ">
+                            <input type="text" class="dropdown-search-input" placeholder="직접 입력 검색..." oninput="filterDropdownItems('univ', this.value)">
+                            <div class="dropdown-items-container" id="items-univ"></div>
+                        </div>
                     </div>
                     <div class="form-group">
                         <label>양성과정(공시)</label>
@@ -183,7 +206,10 @@
                             <span class="btn-text" id="btn-text-course">전체 선택</span>
                             <span class="arrow">▼</span>
                         </div>
-                        <div class="dropdown-menu" id="menu-course"></div>
+                        <div class="dropdown-menu" id="menu-course">
+                            <input type="text" class="dropdown-search-input" placeholder="직접 입력 검색..." oninput="filterDropdownItems('course', this.value)">
+                            <div class="dropdown-items-container" id="items-course"></div>
+                        </div>
                     </div>
                     <div class="form-group">
                         <label>대학구분</label>
@@ -191,7 +217,10 @@
                             <span class="btn-text" id="btn-text-cat">전체 선택</span>
                             <span class="arrow">▼</span>
                         </div>
-                        <div class="dropdown-menu" id="menu-cat"></div>
+                        <div class="dropdown-menu" id="menu-cat">
+                            <input type="text" class="dropdown-search-input" placeholder="직접 입력 검색..." oninput="filterDropdownItems('cat', this.value)">
+                            <div class="dropdown-items-container" id="items-cat"></div>
+                        </div>
                     </div>
                     <div class="form-group">
                         <label>설립유형</label>
@@ -199,7 +228,10 @@
                             <span class="btn-text" id="btn-text-est">전체 선택</span>
                             <span class="arrow">▼</span>
                         </div>
-                        <div class="dropdown-menu" id="menu-est"></div>
+                        <div class="dropdown-menu" id="menu-est">
+                            <input type="text" class="dropdown-search-input" placeholder="직접 입력 검색..." oninput="filterDropdownItems('est', this.value)">
+                            <div class="dropdown-items-container" id="items-est"></div>
+                        </div>
                     </div>
                     <div class="form-group">
                         <label>학과/전공명</label>
@@ -207,7 +239,10 @@
                             <span class="btn-text" id="btn-text-dept">전체 선택</span>
                             <span class="arrow">▼</span>
                         </div>
-                        <div class="dropdown-menu" id="menu-dept"></div>
+                        <div class="dropdown-menu" id="menu-dept">
+                            <input type="text" class="dropdown-search-input" placeholder="직접 입력 검색..." oninput="filterDropdownItems('dept', this.value)">
+                            <div class="dropdown-items-container" id="items-dept"></div>
+                        </div>
                     </div>
                     <div class="form-group">
                         <label>자격종별</label>
@@ -215,7 +250,10 @@
                             <span class="btn-text" id="btn-text-cert">전체 선택</span>
                             <span class="arrow">▼</span>
                         </div>
-                        <div class="dropdown-menu" id="menu-cert"></div>
+                        <div class="dropdown-menu" id="menu-cert">
+                            <input type="text" class="dropdown-search-input" placeholder="직접 입력 검색..." oninput="filterDropdownItems('cert', this.value)">
+                            <div class="dropdown-items-container" id="items-cert"></div>
+                        </div>
                     </div>
                     <div class="form-group">
                         <label>표시과목</label>
@@ -223,7 +261,10 @@
                             <span class="btn-text" id="btn-text-subj">전체 선택</span>
                             <span class="arrow">▼</span>
                         </div>
-                        <div class="dropdown-menu" id="menu-subj"></div>
+                        <div class="dropdown-menu" id="menu-subj">
+                            <input type="text" class="dropdown-search-input" placeholder="직접 입력 검색..." oninput="filterDropdownItems('subj', this.value)">
+                            <div class="dropdown-items-container" id="items-subj"></div>
+                        </div>
                     </div>
                 </div>
                 <div class="search-actions">
@@ -304,7 +345,6 @@
             });
         });
 
-        // 1. 자동 로드 로직 수정
         function autoLoadExcelData() {
             const cacheBustingUrl = "data.xlsx?v=" + new Date().getTime();
 
@@ -314,7 +354,6 @@
                     return res.arrayBuffer();
                 })
                 .then(buffer => {
-                    // 주소창 파라미터 힌트가 망가졌으므로 형식을 명시적으로 지정하여 파싱합니다.
                     parseAndLoadExcel(buffer, true);
                 })
                 .catch(err => {
@@ -332,10 +371,8 @@
                 });
         }
 
-        // 2. 파싱 로직에 명시적 포맷 옵션(bookType) 보완
         function parseAndLoadExcel(arrayBuffer, isAutoFetch = false) {
             try {
-                // 이 부분을 보완하여 주소 뒤 파라미터(?v=)가 붙어도 xlsx 규격으로 완벽 파싱합니다.
                 const readOptions = isAutoFetch ? { type: 'array', bookType: 'xlsx' } : { type: 'array' };
                 const workbook = XLSX.read(arrayBuffer, readOptions);
                 const worksheet = workbook.Sheets[workbook.SheetNames[0]];
@@ -385,14 +422,15 @@
             reader.readAsArrayBuffer(file);
         }
 
+        // 초기화 시 아이템 컨테이너 내부에 목록 주입
         function initDropdownMenus() {
             keys.forEach(key => {
                 const colIdx = colIndexes[key];
                 const uniqueValues = Array.from(new Set(RAW_DATA.map(row => row[colIdx]).filter(val => val && val !== ""))).sort();
                 
-                const menuEl = document.getElementById(`menu-${key}`);
-                if (!menuEl) return;
-                menuEl.innerHTML = uniqueValues.map((val) => `
+                const containerEl = document.getElementById(`items-${key}`);
+                if (!containerEl) return;
+                containerEl.innerHTML = uniqueValues.map((val) => `
                     <label class="dropdown-item" data-value="${val}">
                         <input type="checkbox" value="${val}" ${filterState[key].has(val) ? 'checked' : ''} onchange="onCheckboxChange('${key}', '${val}', this.checked)">
                         <span>${val}</span>
@@ -401,6 +439,7 @@
             });
         }
 
+        // 연쇄 필터링 기능 연동 유지
         function updateDropdownMenus() {
             keys.forEach(targetKey => {
                 const availableData = RAW_DATA.filter(row => {
@@ -415,16 +454,25 @@
                 const colIdx = colIndexes[targetKey];
                 const validValues = new Set(availableData.map(row => row[colIdx]).filter(v => v !== ""));
 
-                const menuEl = document.getElementById(`menu-${targetKey}`);
-                if (!menuEl) return;
-                const items = menuEl.querySelectorAll('.dropdown-item');
+                const containerEl = document.getElementById(`items-${targetKey}`);
+                if (!containerEl) return;
+                const items = containerEl.querySelectorAll('.dropdown-item');
 
                 items.forEach(item => {
                     const input = item.querySelector('input');
                     const val = item.getAttribute('data-value');
 
                     if (validValues.has(val)) {
-                        item.style.display = 'flex';
+                        // 노출 가능 데이터이면서 현재 상단 직접입력 검색 키워드 매칭 상태 확인 필요
+                        const menuEl = document.getElementById(`menu-${targetKey}`);
+                        const searchInput = menuEl.querySelector('.dropdown-search-input');
+                        const keyword = searchInput ? searchInput.value.trim().toLowerCase() : "";
+
+                        if (keyword === "" || val.toLowerCase().includes(keyword)) {
+                            item.style.display = 'flex';
+                        } else {
+                            item.style.display = 'none';
+                        }
                     } else {
                         item.style.display = 'none';
                         if (filterState[targetKey].has(val)) {
@@ -438,13 +486,51 @@
             });
         }
 
+        // 직접 입력 실시간 필터 기능 함수
+        function filterDropdownItems(key, keyword) {
+            const cleanKeyword = keyword.trim().toLowerCase();
+            const containerEl = document.getElementById(`items-${key}`);
+            if (!containerEl) return;
+            const items = containerEl.querySelectorAll('.dropdown-item');
+
+            // 연쇄 필터 상 현재 활성화 가능한 유효 값셋 계산
+            const availableData = RAW_DATA.filter(row => {
+                return keys.every(k => {
+                    if (k === key) return true;
+                    const selectedSet = filterState[k];
+                    if (selectedSet.size === 0) return true;
+                    return selectedSet.has(row[colIndexes[k]]);
+                });
+            });
+            const validValues = new Set(availableData.map(row => row[colIndexes[key]]).filter(v => v !== ""));
+
+            items.forEach(item => {
+                const val = item.getAttribute('data-value');
+                // 연쇄 필터 조건과 검색창 키워드 검색 조건을 동시 충족하는지 검사
+                if (validValues.has(val) && (cleanKeyword === "" || val.toLowerCase().includes(cleanKeyword))) {
+                    item.style.display = 'flex';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+        }
+
         function toggleDropdown(key, event) {
             event.stopPropagation();
             const targetMenu = document.getElementById(`menu-${key}`);
             const isOpen = targetMenu.classList.contains('show');
+            
             closeAllDropdowns();
+            
             if (!isOpen) {
                 targetMenu.classList.add('show');
+                // 드롭다운 열릴 때 검색창 초기화 및 자동 포커스
+                const searchInput = targetMenu.querySelector('.dropdown-search-input');
+                if (searchInput) {
+                    searchInput.value = "";
+                    filterDropdownItems(key, ""); // 목록 전체 다시 보이기 처리
+                    setTimeout(() => searchInput.focus(), 50);
+                }
             }
         }
 
@@ -529,7 +615,14 @@
         }
 
         function resetFilters() {
-            keys.forEach(key => filterState[key].clear());
+            keys.forEach(key => {
+                filterState[key].clear();
+                const menuEl = document.getElementById(`menu-${key}`);
+                if (menuEl) {
+                    const searchInput = menuEl.querySelector('.dropdown-search-input');
+                    if (searchInput) searchInput.value = "";
+                }
+            });
             document.querySelectorAll('.dropdown-menu input[type="checkbox"]').forEach(cb => cb.checked = false);
 
             sortState = { col: null, dir: 'asc' };
