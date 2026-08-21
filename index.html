@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>전국 교원양성기관 통합 검색 & 즐겨찾기 (실시간 연동형)</title>
+    <title>전국 교원양성기관 통합 검색 & 즐겨찾기 (실시간 싱크형)</title>
     <!-- 엑셀 파일 직접 파싱용 라이브러리 -->
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
@@ -251,14 +251,14 @@
             document.addEventListener('click', (e) => { if (!e.target.closest('.form-group')) closeAllDropdowns(); });
         });
 
-        // 🟢 최초 구글 시트 데이터 내려받기
+        // 🟢 구글 시트에서 최신 데이터 읽기 및 렌더링
         function loadFavoritesFromGoogle() {
             setSyncStatus("loading", "⏳ 구글 시트에서 데이터를 가져오는 중...");
             fetch(GOOGLE_WEB_APP_URL)
                 .then(res => res.json())
                 .then(data => {
                     favorites = data;
-                    renderFavorites(); // 화면 렌더링
+                    renderFavorites(); 
                     setSyncStatus("success", "🟢 구글 스프레드시트와 실시간 동기화 완료");
                 })
                 .catch(err => {
@@ -267,9 +267,8 @@
                 });
         }
 
-        // 🔄 핵심 수정 사항: 화면 UI를 먼저 리렌더링(renderFavorites)하고 배경에서 구글 시트로 백그라운드 전송
+        // 🔄 [핵심 수정] 변경사항이 시트에 성공적으로 완벽 반영되었을 때만 renderFavorites()를 다시 호출하여 확실하게 동기화시킵니다.
         function saveFavoritesToGoogle() {
-            renderFavorites(); // 💡 새로고침할 필요 없이 화면 목록부터 즉시 업데이트!
             setSyncStatus("loading", "⏳ 구글 시트에 변경사항 저장 중...");
             
             fetch(GOOGLE_WEB_APP_URL, {
@@ -279,12 +278,13 @@
             .then(res => res.json())
             .then(resData => {
                 if(resData.status === "success") {
-                    setSyncStatus("success", "🟢 구글 스프레드시트에 실시간 저장 완료");
+                    setSyncStatus("success", "🟢 구글 스프레드시트에 저장 완료");
+                    renderFavorites(); // 💡 구글 시트 저장이 완벽하게 완료된 응답을 받으면 즉시 화면 리스트 동기화!!
                 }
             })
             .catch(err => {
                 console.error("구글 저장 에러:", err);
-                setSyncStatus("error", "❌ 구글 저장 실패 (클릭 작업은 로컬 화면에 유지됨)");
+                setSyncStatus("error", "❌ 구글 저장 실패");
             });
         }
 
@@ -450,13 +450,12 @@
             tbody.appendChild(fragment);
         }
 
-        // 즐겨찾기 핸들러 함수들
         function addFavorite(row) {
             const [region, univ, course, cat, est, dept, cert, subj] = row;
             const id = `${region}_${univ}_${course}_${dept}_${cert}_${subj}`;
             if (favorites.some(f => f.id === id)) { alert('이미 즐겨찾기에 등록된 항목입니다.'); return; }
             favorites.push({ id, region, univ, course, dept, cert, subj });
-            saveFavoritesToGoogle(); // UI 선반영 후 클라우드 저장 실행
+            saveFavoritesToGoogle(); // 구글 전송 함수 호출
         }
 
         function removeFavorite(id) { 
@@ -487,7 +486,7 @@
             document.getElementById('favSelectAll').checked = len > 0 && len === chkLen;
         }
 
-        // 즐겨찾기 우측 패널 UI 즉시 갱신 함수
+        // 즐겨찾기 화면 갱신
         function renderFavorites() {
             document.getElementById('favCount').innerText = favorites.length;
             document.getElementById('favSelectAll').checked = false;
