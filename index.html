@@ -6,6 +6,11 @@
     <title>전국 교원양성기관 통합 검색 & 즐겨찾기</title>
     <!-- 엑셀 파일 직접 파싱용 라이브러리 -->
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    
+    <!-- 🔥 실시간 자동 동기화를 위한 Firebase 라이브러리 -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; background-color: #f1f5f9; color: #1e293b; height: 100vh; overflow: hidden; }
@@ -16,7 +21,6 @@
         .header .badge { background: #2563eb; font-size: 0.75rem; padding: 2px 8px; border-radius: 12px; font-weight: normal; }
         .header-actions { display: flex; align-items: center; gap: 10px; }
         
-        /* 로드맵 강조 버튼 스타일 */
         .roadmap-btn { 
             background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); 
             color: white; 
@@ -51,7 +55,6 @@
         .form-group { display: flex; flex-direction: column; gap: 0.35rem; position: relative; }
         .form-group label { font-size: 0.8rem; font-weight: 600; color: #475569; }
 
-        /* 체크박스 다중 선택 드롭다운 스타일 */
         .dropdown-btn {
             width: 100%;
             padding: 0.45rem 0.65rem;
@@ -92,34 +95,11 @@
         }
         .dropdown-menu.show { display: block; }
         
-        /* 직접 입력 검색창 스타일 */
-        .dropdown-search-input {
-            width: 100%;
-            padding: 0.4rem 0.5rem;
-            margin-bottom: 0.4rem;
-            border: 1px solid #cbd5e1;
-            border-radius: 4px;
-            font-size: 0.78rem;
-            outline: none;
-        }
+        .dropdown-search-input { width: 100%; padding: 0.4rem 0.5rem; margin-bottom: 0.4rem; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 0.78rem; outline: none; }
         .dropdown-search-input:focus { border-color: #2563eb; }
-
-        .dropdown-items-container {
-            max-height: 180px;
-            overflow-y: auto;
-        }
+        .dropdown-items-container { max-height: 180px; overflow-y: auto; }
         
-        .dropdown-item {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            padding: 0.35rem 0.5rem;
-            font-size: 0.8rem;
-            color: #334155;
-            cursor: pointer;
-            border-radius: 4px;
-            user-select: none;
-        }
+        .dropdown-item { display: flex; align-items: center; gap: 8px; padding: 0.35rem 0.5rem; font-size: 0.8rem; color: #334155; cursor: pointer; border-radius: 4px; user-select: none; }
         .dropdown-item:hover { background-color: #f1f5f9; }
         .dropdown-item input[type="checkbox"] { cursor: pointer; accent-color: #2563eb; }
 
@@ -163,20 +143,10 @@
         .panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; padding-bottom: 0.5rem; border-bottom: 2px solid #f1f5f9; }
         .panel-title { font-weight: 700; font-size: 1rem; color: #0f172a; display: flex; align-items: center; gap: 6px; }
         
-        /* 동기화 세션 영역 추가 */
-        .sync-box { background: #f8fafc; border: 1px dashed #cbd5e1; padding: 0.6rem; border-radius: 6px; margin-bottom: 0.75rem; display: flex; gap: 6px; align-items: center; }
-        .sync-input { flex: 1; padding: 0.35rem 0.5rem; font-size: 0.8rem; border: 1px solid #cbd5e1; border-radius: 4px; }
-        .btn-sync { background: #2563eb; color: white; border: none; padding: 0.35rem 0.6rem; border-radius: 4px; font-size: 0.78rem; font-weight: 600; cursor: pointer; }
-        .btn-sync:hover { background: #1d4ed8; }
+        /* ✨ 상단 클라우드 상태 알림창 */
+        .sync-status-box { background: #f0fdf4; border: 1px solid #bbf7d0; padding: 0.6rem; border-radius: 6px; margin-bottom: 0.75rem; display: flex; align-items: center; gap: 6px; font-size: 0.78rem; color: #166534; font-weight: 600; }
 
-        .fav-batch-actions {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 0.75rem;
-            padding-bottom: 0.5rem;
-            border-bottom: 1px solid #e2e8f0;
-        }
+        .fav-batch-actions { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; padding-bottom: 0.5rem; border-bottom: 1px solid #e2e8f0; }
         .fav-batch-actions label { font-size: 0.78rem; display: flex; align-items: center; gap: 4px; cursor: pointer; color: #475569; font-weight: 600; }
         .btn-del-sub { background: #ef4444; color: white; border: none; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.72rem; cursor: pointer; font-weight: 500; }
         .btn-del-sub:hover { background: #dc2626; }
@@ -196,7 +166,6 @@
     <div class="header">
         <h1>🎓 전국 교원양성기관 통합 검색 & 즐겨찾기 <span class="badge">2024년 5월 기준</span></h1>
         <div class="header-actions">
-            <!-- 로드맵 연동 버튼 -->
             <a href="loadmap.html" target="_blank" class="roadmap-btn">🗺️ 자격증 취득 로드맵</a>
             <button class="file-upload-btn" onclick="document.getElementById('excelFileInput').click()">📂 엑셀 수동 연동</button>
             <input type="file" id="excelFileInput" accept=".xlsx, .xls" style="display: none;" onchange="handleFileUpload(event)">
@@ -206,97 +175,17 @@
     <div class="app-container">
         <!-- 메인 영역 -->
         <main class="main-content">
-            <!-- 상단 상세 검색 카드 -->
             <div class="search-card">
                 <div class="search-grid">
-                    <div class="form-group">
-                        <label>지역(소재지)</label>
-                        <div class="dropdown-btn" onclick="toggleDropdown('region', event)">
-                            <span class="btn-text" id="btn-text-region">전체 선택</span>
-                            <span class="arrow">▼</span>
-                        </div>
-                        <div class="dropdown-menu" id="menu-region">
-                            <input type="text" class="dropdown-search-input" placeholder="직접 입력 검색..." oninput="filterDropdownItems('region', this.value)">
-                            <div class="dropdown-items-container" id="items-region"></div>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label>대학명</label>
-                        <div class="dropdown-btn" onclick="toggleDropdown('univ', event)">
-                            <span class="btn-text" id="btn-text-univ">전체 선택</span>
-                            <span class="arrow">▼</span>
-                        </div>
-                        <div class="dropdown-menu" id="menu-univ">
-                            <input type="text" class="dropdown-search-input" placeholder="직접 입력 검색..." oninput="filterDropdownItems('univ', this.value)">
-                            <div class="dropdown-items-container" id="items-univ"></div>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label>양성과정(공시)</label>
-                        <div class="dropdown-btn" onclick="toggleDropdown('course', event)">
-                            <span class="btn-text" id="btn-text-course">전체 선택</span>
-                            <span class="arrow">▼</span>
-                        </div>
-                        <div class="dropdown-menu" id="menu-course">
-                            <input type="text" class="dropdown-search-input" placeholder="직접 입력 검색..." oninput="filterDropdownItems('course', this.value)">
-                            <div class="dropdown-items-container" id="items-course"></div>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label>대학구분</label>
-                        <div class="dropdown-btn" onclick="toggleDropdown('cat', event)">
-                            <span class="btn-text" id="btn-text-cat">전체 선택</span>
-                            <span class="arrow">▼</span>
-                        </div>
-                        <div class="dropdown-menu" id="menu-cat">
-                            <input type="text" class="dropdown-search-input" placeholder="직접 입력 검색..." oninput="filterDropdownItems('cat', this.value)">
-                            <div class="dropdown-items-container" id="items-cat"></div>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label>설립유형</label>
-                        <div class="dropdown-btn" onclick="toggleDropdown('est', event)">
-                            <span class="btn-text" id="btn-text-est">전체 선택</span>
-                            <span class="arrow">▼</span>
-                        </div>
-                        <div class="dropdown-menu" id="menu-est">
-                            <input type="text" class="dropdown-search-input" placeholder="직접 입력 검색..." oninput="filterDropdownItems('est', this.value)">
-                            <div class="dropdown-items-container" id="items-est"></div>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label>학과/전공명</label>
-                        <div class="dropdown-btn" onclick="toggleDropdown('dept', event)">
-                            <span class="btn-text" id="btn-text-dept">전체 선택</span>
-                            <span class="arrow">▼</span>
-                        </div>
-                        <div class="dropdown-menu" id="menu-dept">
-                            <input type="text" class="dropdown-search-input" placeholder="직접 입력 검색..." oninput="filterDropdownItems('dept', this.value)">
-                            <div class="dropdown-items-container" id="items-dept"></div>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label>자격종별</label>
-                        <div class="dropdown-btn" onclick="toggleDropdown('cert', event)">
-                            <span class="btn-text" id="btn-text-cert">전체 선택</span>
-                            <span class="arrow">▼</span>
-                        </div>
-                        <div class="dropdown-menu" id="menu-cert">
-                            <input type="text" class="dropdown-search-input" placeholder="직접 입력 검색..." oninput="filterDropdownItems('cert', this.value)">
-                            <div class="dropdown-items-container" id="items-cert"></div>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label>표시과목</label>
-                        <div class="dropdown-btn" onclick="toggleDropdown('subj', event)">
-                            <span class="btn-text" id="btn-text-subj">전체 선택</span>
-                            <span class="arrow">▼</span>
-                        </div>
-                        <div class="dropdown-menu" id="menu-subj">
-                            <input type="text" class="dropdown-search-input" placeholder="직접 입력 검색..." oninput="filterDropdownItems('subj', this.value)">
-                            <div class="dropdown-items-container" id="items-subj"></div>
-                        </div>
-                    </div>
+                    <!-- 필터 8종 -->
+                    <div class="form-group"><label>지역(소재지)</label><div class="dropdown-btn" onclick="toggleDropdown('region', event)"><span class="btn-text" id="btn-text-region">전체 선택</span><span class="arrow">▼</span></div><div class="dropdown-menu" id="menu-region"><input type="text" class="dropdown-search-input" placeholder="직접 입력 검색..." oninput="filterDropdownItems('region', this.value)"><div class="dropdown-items-container" id="items-region"></div></div></div>
+                    <div class="form-group"><label>대학명</label><div class="dropdown-btn" onclick="toggleDropdown('univ', event)"><span class="btn-text" id="btn-text-univ">전체 선택</span><span class="arrow">▼</span></div><div class="dropdown-menu" id="menu-univ"><input type="text" class="dropdown-search-input" placeholder="직접 입력 검색..." oninput="filterDropdownItems('univ', this.value)"><div class="dropdown-items-container" id="items-univ"></div></div></div>
+                    <div class="form-group"><label>양성과정(공시)</label><div class="dropdown-btn" onclick="toggleDropdown('course', event)"><span class="btn-text" id="btn-text-course">전체 선택</span><span class="arrow">▼</span></div><div class="dropdown-menu" id="menu-course"><input type="text" class="dropdown-search-input" placeholder="직접 입력 검색..." oninput="filterDropdownItems('course', this.value)"><div class="dropdown-items-container" id="items-course"></div></div></div>
+                    <div class="form-group"><label>대학구분</label><div class="dropdown-btn" onclick="toggleDropdown('cat', event)"><span class="btn-text" id="btn-text-cat">전체 선택</span><span class="arrow">▼</span></div><div class="dropdown-menu" id="menu-cat"><input type="text" class="dropdown-search-input" placeholder="직접 입력 검색..." oninput="filterDropdownItems('cat', this.value)"><div class="dropdown-items-container" id="items-cat"></div></div></div>
+                    <div class="form-group"><label>설립유형</label><div class="dropdown-btn" onclick="toggleDropdown('est', event)"><span class="btn-text" id="btn-text-est">전체 선택</span><span class="arrow">▼</span></div><div class="dropdown-menu" id="menu-est"><input type="text" class="dropdown-search-input" placeholder="직접 입력 검색..." oninput="filterDropdownItems('est', this.value)"><div class="dropdown-items-container" id="items-est"></div></div></div>
+                    <div class="form-group"><label>학과/전공명</label><div class="dropdown-btn" onclick="toggleDropdown('dept', event)"><span class="btn-text" id="btn-text-dept">전체 선택</span><span class="arrow">▼</span></div><div class="dropdown-menu" id="menu-dept"><input type="text" class="dropdown-search-input" placeholder="직접 입력 검색..." oninput="filterDropdownItems('dept', this.value)"><div class="dropdown-items-container" id="items-dept"></div></div></div>
+                    <div class="form-group"><label>자격종별</label><div class="dropdown-btn" onclick="toggleDropdown('cert', event)"><span class="btn-text" id="btn-text-cert">전체 선택</span><span class="arrow">▼</span></div><div class="dropdown-menu" id="menu-cert"><input type="text" class="dropdown-search-input" placeholder="직접 입력 검색..." oninput="filterDropdownItems('cert', this.value)"><div class="dropdown-items-container" id="items-cert"></div></div></div>
+                    <div class="form-group"><label>표시과목</label><div class="dropdown-btn" onclick="toggleDropdown('subj', event)"><span class="btn-text" id="btn-text-subj">전체 선택</span><span class="arrow">▼</span></div><div class="dropdown-menu" id="menu-subj"><input type="text" class="dropdown-search-input" placeholder="직접 입력 검색..." oninput="filterDropdownItems('subj', this.value)"><div class="dropdown-items-container" id="items-subj"></div></div></div>
                 </div>
                 <div class="search-actions">
                     <span class="result-count" id="resultCount">로딩 중...</span>
@@ -333,16 +222,13 @@
                 <div class="panel-title">⭐ 저장된 즐겨찾기 (<span id="favCount">0</span>)</div>
             </div>
             
-            <!-- PC 간 동기화를 위한 키 입력 상자 추가 -->
-            <div class="sync-box">
-                <input type="text" id="syncUserId" class="sync-input" placeholder="동기화 고유 ID 입력 (예: 이메일)">
-                <button class="btn-sync" onclick="changeSyncUser()">연동</button>
+            <!-- ✨ 자동 연결 상태 표시창 (입력창 제거) -->
+            <div class="sync-status-box">
+                🟢 클라우드 실시간 동기화 작동 중
             </div>
 
             <div class="fav-batch-actions">
-                <label>
-                    <input type="checkbox" id="favSelectAll" onclick="toggleSelectAllFavs(this.checked)"> 전체선택
-                </label>
+                <label><input type="checkbox" id="favSelectAll" onclick="toggleSelectAllFavs(this.checked)"> 전체선택</label>
                 <div style="display: flex; gap: 4px;">
                     <button class="btn-del-sub" onclick="deleteSelectedFavorites()">선택 삭제</button>
                     <button class="btn-del-sub" onclick="clearAllFavorites()">전체 삭제</button>
@@ -353,125 +239,77 @@
     </div>
 
     <script>
+        // ✨ 테스트용 공용 Firebase 실시간 데이터베이스 세팅
+        const firebaseConfig = {
+            databaseURL: "https://teacher-fav-sync-default-rtdb.firebaseio.com/"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        // 🔥 [ID 하드코딩] 여기에 지정한 값으로 모든 PC가 자동 연동됩니다.
+        let currentUserId = "우리팀_교원양성_공유ID"; 
+
         let RAW_DATA = [];
         let currentFilteredData = [];
         let favorites = [];
         let sortState = { col: null, dir: 'asc' };
-        let currentUserId = localStorage.getItem('sync_user_id') || 'default_user'; // 기본 유저 세팅
-
+        
         const keys = ['region', 'univ', 'course', 'cat', 'est', 'dept', 'cert', 'subj'];
         const colIndexes = { region: 0, univ: 1, course: 2, cat: 3, est: 4, dept: 5, cert: 6, subj: 7 };
+        const filterState = { region: new Set(), univ: new Set(), course: new Set(), cat: new Set(), est: new Set(), dept: new Set(), cert: new Set(), subj: new Set() };
 
-        const filterState = {
-            region: new Set(),
-            univ: new Set(),
-            course: new Set(),
-            cat: new Set(),
-            est: new Set(),
-            dept: new Set(),
-            cert: new Set(),
-            subj: new Set()
-        };
-
-        window.addEventListener('DOMContentLoaded', async () => {
-            document.getElementById('syncUserId').value = currentUserId === 'default_user' ? '' : currentUserId;
-            await loadFavoritesFromServer();
+        window.addEventListener('DOMContentLoaded', () => {
+            startRealtimeSync(); // 파일이 열리자마자 실시간 동기화 리스너 작동
             autoLoadExcelData();
-
-            document.addEventListener('click', (e) => {
-                if (!e.target.closest('.form-group')) {
-                    closeAllDropdowns();
-                }
-            });
+            document.addEventListener('click', (e) => { if (!e.target.closest('.form-group')) closeAllDropdowns(); });
         });
 
-        // --- ID 변경 후 재연동 기능 추가 ---
-        async function changeSyncUser() {
-            const inputId = document.getElementById('syncUserId').value.trim();
-            if(!inputId) {
-                alert('올바른 동기화 ID를 입력해주세요.');
-                return;
-            }
-            currentUserId = inputId;
-            localStorage.setItem('sync_user_id', currentUserId);
-            alert(`[${currentUserId}] 계정으로 즐겨찾기를 연동합니다.`);
-            await loadFavoritesFromServer();
+        // ✨ Firebase 실시간 동기화 시작 (On value 리스너)
+        // 다른 사람이 데이터베이스를 변경하면 내 화면도 실시간(1초 이내)으로 자동 갱신됩니다.
+        function startRealtimeSync() {
+            const safeKey = encodeSafeKey(currentUserId);
+            db.ref('users/' + safeKey).on('value', (snapshot) => {
+                const data = snapshot.val();
+                favorites = data ? data : [];
+                renderFavorites();
+            }, (err) => {
+                console.error('실시간 동기화 에러:', err);
+            });
         }
 
-        // --- 안전한 서버 동기화 함수 (ID 쿼리 스트링 매핑 추가) ---
-        async function loadFavoritesFromServer() {
+        // ✨ Firebase 데이터 저장/업데이트 함수
+        async function saveFavoritesToFirebase() {
             try {
-                // API 호출 시 고유 식별자 userId 전달 구조로 쿼리 스트링 변경
-                const res = await fetch(`/api/favorites?userId=${encodeURIComponent(currentUserId)}`);
-                if (res.ok) {
-                    favorites = await res.json();
-                } else {
-                    console.warn('서버 API 응답 없음 (/api/favorites). 기본 상태로 실행합니다.');
-                }
+                await db.ref('users/' + encodeSafeKey(currentUserId)).set(favorites);
             } catch (err) {
-                console.warn('즐겨찾기 서버 로드 연동 실패 (기본 모드로 동작):', err);
+                console.error('Firebase 저장 실패:', err);
             }
-            renderFavorites();
         }
 
-        async function saveFavorites() {
-            try {
-                // POST 저장 시에도 body 내부 혹은 쿼리에 고유 ID를 전달하도록 설정
-                await fetch('/api/favorites', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ userId: currentUserId, favorites: favorites })
-                });
-            } catch (err) {
-                console.error('즐겨찾기 서버 저장 실패:', err);
-            }
-            renderFavorites();
+        function encodeSafeKey(key) {
+            return key.replace(/[\.\#\$\[\]]/g, "_");
         }
 
-        // --- 엑셀 로드 및 파싱 함수 ---
+        // --- 이하 데이터 핸들링 및 UI 로직 ---
         function autoLoadExcelData() {
             const cacheBustingUrl = "data.xlsx?v=" + new Date().getTime();
-
             fetch(cacheBustingUrl)
-                .then(res => {
-                    if (!res.ok) throw new Error("파일 로드 에러 (Status: " + res.status + ")");
-                    return res.arrayBuffer();
-                })
-                .then(buffer => {
-                    parseAndLoadExcel(buffer, true);
-                })
+                .then(res => { if (!res.ok) throw new Error(); return res.arrayBuffer(); })
+                .then(buffer => { parseAndLoadExcel(buffer, true); })
                 .catch(err => {
-                    console.error("엑셀 자동 로드 실패:", err);
-                    const countEl = document.getElementById('resultCount');
-                    if (countEl) countEl.innerText = "엑셀 연동 필요";
-                    
-                    const tbody = document.getElementById('resultTbody');
-                    if (tbody) {
-                        tbody.innerHTML = `
-                            <tr>
-                                <td colspan="11" style="text-align:center; padding: 3rem; color: #64748b;">
-                                    ⚠️ <strong>data.xlsx</strong> 파일을 자동으로 로드하지 못했습니다.<br><br>
-                                    <strong>해결 방법:</strong><br>
-                                    1. HTML 파일과 동일한 최상위 폴더에 <strong>data.xlsx</strong> 파일이 존재하는지 확인하세요.<br>
-                                    2. 우측 상단의 [📂 엑셀 수동 연동] 버튼을 눌러 직접 파일을 선택하셔도 됩니다.
-                                </td>
-                            </tr>`;
-                    }
+                    document.getElementById('resultCount').innerText = "엑셀 연동 필요";
+                    document.getElementById('resultTbody').innerHTML = `<tr><td colspan="11" style="text-align:center; padding: 3rem; color: #64748b;">⚠️ <strong>data.xlsx</strong> 파일을 자동으로 로드하지 못했습니다.<br><br>HTML 파일과 같은 폴더에 파일이 있는지 확인하거나 상단 [엑셀 수동 연동]을 이용하세요.</td></tr>`;
                 });
         }
 
         function parseAndLoadExcel(arrayBuffer, isAutoFetch = false) {
             try {
-                const readOptions = isAutoFetch ? { type: 'array', bookType: 'xlsx' } : { type: 'array' };
-                const workbook = XLSX.read(arrayBuffer, readOptions);
+                const workbook = XLSX.read(arrayBuffer, { type: 'array' });
                 const worksheet = workbook.Sheets[workbook.SheetNames[0]];
                 const jsonData = XLSX.utils.sheet_to_json(worksheet);
-                
                 const parsedData = [];
                 jsonData.forEach(row => {
-                    const status = row['폐지여부'] || '';
-                    if (status.toString().trim() === 'Y') return;
-
+                    if ((row['폐지여부'] || '').toString().trim() === 'Y') return;
                     const region = (row['소재지'] || '').toString().trim();
                     const univ = (row['대학명'] || '').toString().trim();
                     const course = (row['양성과정(공시)'] || row['양성과정'] || '').toString().trim();
@@ -480,46 +318,24 @@
                     const dept = (row['학과명'] || '').toString().trim();
                     const cert = (row['자격종별'] || '').toString().trim();
                     const subj = (row['표시과목'] || '').toString().trim();
-
-                    if (univ || dept) {
-                        parsedData.push([region, univ, course, cat, est, dept, cert, subj]);
-                    }
+                    if (univ || dept) parsedData.push([region, univ, course, cat, est, dept, cert, subj]);
                 });
-
-                if (parsedData.length > 0) {
-                    RAW_DATA = parsedData;
-                    initDropdownMenus();
-                    applyAllFilters();
-                } else {
-                    alert('엑셀 파일 데이터가 비어있거나 올바른 양식이 아닙니다.');
-                }
-            } catch (error) {
-                console.error("데이터 파싱 에러:", error);
-                alert("엑셀 파일 파싱 중 에러가 발생했습니다.");
-            }
+                if (parsedData.length > 0) { RAW_DATA = parsedData; initDropdownMenus(); applyAllFilters(); }
+            } catch (error) { alert("엑셀 파싱 중 에러가 발생했습니다."); }
         }
 
         function handleFileUpload(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-
+            const file = event.target.files[0]; if (!file) return;
             const reader = new FileReader();
-            reader.onload = function(e) {
-                parseAndLoadExcel(e.target.result, false);
-                alert(`총 ${RAW_DATA.length}건의 데이터를 성공적으로 불러왔습니다.`);
-            };
+            reader.onload = function(e) { parseAndLoadExcel(e.target.result, false); };
             reader.readAsArrayBuffer(file);
         }
 
-        // --- 검색 드롭다운 & 필터링 로직 ---
         function initDropdownMenus() {
             keys.forEach(key => {
                 const colIdx = colIndexes[key];
-                const uniqueValues = Array.from(new Set(RAW_DATA.map(row => row[colIdx]).filter(val => val && val !== ""))).sort();
-                
-                const containerEl = document.getElementById(`items-${key}`);
-                if (!containerEl) return;
-                containerEl.innerHTML = uniqueValues.map((val) => `
+                const uniqueValues = Array.from(new Set(RAW_DATA.map(row => row[colIdx]).filter(val => val))).sort();
+                document.getElementById(`items-${key}`).innerHTML = uniqueValues.map((val) => `
                     <label class="dropdown-item" data-value="${val}">
                         <input type="checkbox" value="${val}" ${filterState[key].has(val) ? 'checked' : ''} onchange="onCheckboxChange('${key}', '${val}', this.checked)">
                         <span>${val}</span>
@@ -530,345 +346,145 @@
 
         function updateDropdownMenus() {
             keys.forEach(targetKey => {
-                const availableData = RAW_DATA.filter(row => {
-                    return keys.every(key => {
-                        if (key === targetKey) return true;
-                        const selectedSet = filterState[key];
-                        if (selectedSet.size === 0) return true;
-                        return selectedSet.has(row[colIndexes[key]]);
-                    });
-                });
-
-                const colIdx = colIndexes[targetKey];
-                const validValues = new Set(availableData.map(row => row[colIdx]).filter(v => v !== ""));
-
-                const containerEl = document.getElementById(`items-${targetKey}`);
-                if (!containerEl) return;
-                const items = containerEl.querySelectorAll('.dropdown-item');
-
+                const availableData = RAW_DATA.filter(row => keys.every(key => key === targetKey || filterState[key].size === 0 || filterState[key].has(row[colIndexes[key]])));
+                const validValues = new Set(availableData.map(row => row[colIndexes[targetKey]]).filter(v => v));
+                const items = document.getElementById(`items-${targetKey}`).querySelectorAll('.dropdown-item');
                 items.forEach(item => {
-                    const input = item.querySelector('input');
                     const val = item.getAttribute('data-value');
-
                     if (validValues.has(val)) {
-                        const menuEl = document.getElementById(`menu-${targetKey}`);
-                        const searchInput = menuEl.querySelector('.dropdown-search-input');
-                        const keyword = searchInput ? searchInput.value.trim().toLowerCase() : "";
-
-                        if (keyword === "" || val.toLowerCase().includes(keyword)) {
-                            item.style.display = 'flex';
-                        } else {
-                            item.style.display = 'none';
-                        }
+                        const keyword = document.getElementById(`menu-${targetKey}`).querySelector('.dropdown-search-input').value.trim().toLowerCase();
+                        item.style.display = (keyword === "" || val.toLowerCase().includes(keyword)) ? 'flex' : 'none';
                     } else {
                         item.style.display = 'none';
-                        if (filterState[targetKey].has(val)) {
-                            filterState[targetKey].delete(val);
-                            if (input) input.checked = false;
-                        }
+                        if (filterState[targetKey].has(val)) { filterState[targetKey].delete(val); item.querySelector('input').checked = false; }
                     }
                 });
-
                 updateDropdownButtonText(targetKey);
             });
         }
 
         function filterDropdownItems(key, keyword) {
             const cleanKeyword = keyword.trim().toLowerCase();
-            const containerEl = document.getElementById(`items-${key}`);
-            if (!containerEl) return;
-            const items = containerEl.querySelectorAll('.dropdown-item');
-
-            const availableData = RAW_DATA.filter(row => {
-                return keys.every(k => {
-                    if (k === key) return true;
-                    const selectedSet = filterState[k];
-                    if (selectedSet.size === 0) return true;
-                    return selectedSet.has(row[colIndexes[k]]);
-                });
-            });
-            const validValues = new Set(availableData.map(row => row[colIndexes[key]]).filter(v => v !== ""));
-
-            items.forEach(item => {
+            const availableData = RAW_DATA.filter(row => keys.every(k => k === key || filterState[k].size === 0 || filterState[k].has(row[colIndexes[k]])));
+            const validValues = new Set(availableData.map(row => row[colIndexes[key]]).filter(v => v));
+            document.getElementById(`items-${key}`).querySelectorAll('.dropdown-item').forEach(item => {
                 const val = item.getAttribute('data-value');
-                if (validValues.has(val) && (cleanKeyword === "" || val.toLowerCase().includes(cleanKeyword))) {
-                    item.style.display = 'flex';
-                } else {
-                    item.style.display = 'none';
-                }
+                item.style.display = (validValues.has(val) && (cleanKeyword === "" || val.toLowerCase().includes(cleanKeyword))) ? 'flex' : 'none';
             });
         }
 
         function toggleDropdown(key, event) {
             event.stopPropagation();
             const targetMenu = document.getElementById(`menu-${key}`);
-            if (!targetMenu) return;
-            
             const isOpen = targetMenu.classList.contains('show');
             closeAllDropdowns();
-            
             if (!isOpen) {
                 targetMenu.classList.add('show');
-                const searchInput = targetMenu.querySelector('.dropdown-search-input');
-                if (searchInput) {
-                    searchInput.value = "";
-                    filterDropdownItems(key, "");
-                    setTimeout(() => searchInput.focus(), 50);
-                }
+                const input = targetMenu.querySelector('.dropdown-search-input');
+                input.value = ""; filterDropdownItems(key, ""); setTimeout(() => input.focus(), 50);
             }
         }
 
-        function closeAllDropdowns() {
-            document.querySelectorAll('.dropdown-menu').forEach(menu => menu.classList.remove('show'));
-        }
-
-        function onCheckboxChange(key, value, isChecked) {
-            if (isChecked) {
-                filterState[key].add(value);
-            } else {
-                filterState[key].delete(value);
-            }
-            applyAllFilters();
-        }
-
+        function closeAllDropdowns() { document.querySelectorAll('.dropdown-menu').forEach(menu => menu.classList.remove('show')); }
+        function onCheckboxChange(key, value, isChecked) { if (isChecked) filterState[key].add(value); else filterState[key].delete(value); applyAllFilters(); }
         function updateDropdownButtonText(key) {
-            const btnTextEl = document.getElementById('btn-text-' + key);
-            if (!btnTextEl) return;
-            const selectedArray = Array.from(filterState[key]);
-
-            if (selectedArray.length === 0) {
-                btnTextEl.innerText = "전체 선택";
-            } else if (selectedArray.length === 1) {
-                btnTextEl.innerText = selectedArray[0];
-            } else {
-                btnTextEl.innerText = `${selectedArray[0]} 외 ${selectedArray.length - 1}개`;
-            }
+            const arr = Array.from(filterState[key]);
+            document.getElementById('btn-text-' + key).innerText = arr.length === 0 ? "전체 선택" : (arr.length === 1 ? arr[0] : `${arr[0]} 외 ${arr.length - 1}개`);
         }
 
         function applyAllFilters() {
-            currentFilteredData = RAW_DATA.filter(row => {
-                return keys.every(key => {
-                    const selectedSet = filterState[key];
-                    if (selectedSet.size === 0) return true;
-                    return selectedSet.has(row[colIndexes[key]]);
-                });
-            });
-
+            currentFilteredData = RAW_DATA.filter(row => keys.every(key => filterState[key].size === 0 || filterState[key].has(row[colIndexes[key]])));
             updateDropdownMenus();
-
-            if (sortState.col !== null) {
-                executeSort();
-            } else {
-                renderTable(currentFilteredData);
-            }
+            if (sortState.col !== null) executeSort(); else renderTable(currentFilteredData);
         }
 
         function sortTable(columnIndex) {
-            if (sortState.col === columnIndex) {
-                sortState.dir = sortState.dir === 'asc' ? 'desc' : 'asc';
-            } else {
-                sortState.col = columnIndex;
-                sortState.dir = 'asc';
-            }
-
+            sortState.dir = (sortState.col === columnIndex && sortState.dir === 'asc') ? 'desc' : 'asc';
+            sortState.col = columnIndex;
             for (let i = 0; i < 8; i++) {
                 const icon = document.getElementById(`sort${i}`);
-                if (icon) {
-                    if (i === columnIndex) {
-                        icon.innerText = sortState.dir === 'asc' ? '▲' : '▼';
-                        icon.style.color = '#2563eb';
-                    } else {
-                        icon.innerText = '⇅';
-                        icon.style.color = '#94a3b8';
-                    }
-                }
+                if (icon) { icon.innerText = i === columnIndex ? (sortState.dir === 'asc' ? '▲' : '▼') : '⇅'; icon.style.color = i === columnIndex ? '#2563eb' : '#94a3b8'; }
             }
-
             executeSort();
         }
 
         function executeSort() {
-            const col = sortState.col;
-            const dir = sortState.dir === 'asc' ? 1 : -1;
-
-            currentFilteredData.sort((a, b) => {
-                const valA = (a[col] || '').toString();
-                const valB = (b[col] || '').toString();
-                return valA.localeCompare(valB, 'ko') * dir;
-            });
-
+            const col = sortState.col; const dir = sortState.dir === 'asc' ? 1 : -1;
+            currentFilteredData.sort((a, b) => (a[col] || '').toString().localeCompare((b[col] || '').toString(), 'ko') * dir);
             renderTable(currentFilteredData);
         }
 
         function resetFilters() {
-            keys.forEach(key => {
-                filterState[key].clear();
-                const menuEl = document.getElementById(`menu-${key}`);
-                if (menuEl) {
-                    const searchInput = menuEl.querySelector('.dropdown-search-input');
-                    if (searchInput) searchInput.value = "";
-                }
-            });
+            keys.forEach(key => { filterState[key].clear(); document.getElementById(`menu-${key}`).querySelector('.dropdown-search-input').value = ""; });
             document.querySelectorAll('.dropdown-menu input[type="checkbox"]').forEach(cb => cb.checked = false);
-
             sortState = { col: null, dir: 'asc' };
-            for (let i = 0; i < 8; i++) {
-                const icon = document.getElementById(`sort${i}`);
-                if (icon) {
-                    icon.innerText = '⇅';
-                    icon.style.color = '#94a3b8';
-                }
-            }
-
-            closeAllDropdowns();
-            initDropdownMenus();
-            applyAllFilters();
+            for (let i = 0; i < 8; i++) { const icon = document.getElementById(`sort${i}`); if (icon) { icon.innerText = '⇅'; icon.style.color = '#94a3b8'; } }
+            closeAllDropdowns(); initDropdownMenus(); applyAllFilters();
         }
 
-        // --- 테이블 및 즐겨찾기 렌더링 ---
         function renderTable(data) {
             const tbody = document.getElementById('resultTbody');
-            const countEl = document.getElementById('resultCount');
-            if (countEl) countEl.innerText = `검색 결과: ${data.length}건`;
-            if (!tbody) return;
-
-            tbody.innerHTML = '';
-
-            if (data.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="11" style="text-align:center; padding: 2.5rem; color: #94a3b8;">검색 조건에 일치하는 데이터가 없습니다.</td></tr>`;
-                return;
-            }
-
+            document.getElementById('resultCount').innerText = `검색 결과: ${data.length}건`;
+            tbody.innerHTML = data.length === 0 ? `<tr><td colspan="11" style="text-align:center; padding: 2.5rem; color: #94a3b8;">검색 조건에 일치하는 데이터가 없습니다.</td></tr>` : '';
+            
             const fragment = document.createDocumentFragment();
             data.forEach((row, index) => {
                 const [region, univ, course, cat, est, dept, cert, subj] = row;
-                const portalLink = `https://search.naver.com/search.naver?query=${encodeURIComponent(univ + ' 입학처')}`;
-                
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
                     <td style="text-align: center; font-weight: 600; color: #64748b; background: #f8fafc;">${index + 1}</td>
-                    <td><span class="tag-region">${region || '-'}</span></td>
-                    <td><strong>${univ}</strong></td>
-                    <td><span class="tag-course">${course || '-'}</span></td>
-                    <td>${cat || '-'}</td>
-                    <td>${est || '-'}</td>
-                    <td>${dept || '-'}</td>
-                    <td>${cert || '-'}</td>
-                    <td>${subj || '-'}</td>
-                    <td style="text-align: center; white-space: nowrap;">
-                        <button class="btn-star" onclick='addFavorite(${JSON.stringify(row)})'>★ 등록</button>
-                    </td>
-                    <td style="text-align: center; white-space: nowrap;">
-                        <a href="${portalLink}" target="_blank" rel="noopener noreferrer" class="btn-link">
-                            🔗 입학처
-                        </a>
-                    </td>
+                    <td><span class="tag-region">${region || '-'}</span></td><td><strong>${univ}</strong></td><td><span class="tag-course">${course || '-'}</span></td>
+                    <td>${cat || '-'}</td><td>${est || '-'}</td><td>${dept || '-'}</td><td>${cert || '-'}</td><td>${subj || '-'}</td>
+                    <td style="text-align: center; white-space: nowrap;"><button class="btn-star" onclick='addFavorite(${JSON.stringify(row)})'>★ 등록</button></td>
+                    <td style="text-align: center; white-space: nowrap;"><a href="https://search.naver.com/search.naver?query=${encodeURIComponent(univ + ' 입학처')}" target="_blank" rel="noopener noreferrer" class="btn-link">🔗 입학처</a></td>
                 `;
                 fragment.appendChild(tr);
             });
             tbody.appendChild(fragment);
         }
 
-        // 중복 방지 로직 고도화 (유저 식별 고유키 포함 가능)
         function addFavorite(row) {
             const [region, univ, course, cat, est, dept, cert, subj] = row;
             const id = `${region}_${univ}_${course}_${dept}_${cert}_${subj}`;
-
-            if (favorites.some(f => f.id === id)) {
-                alert('이미 즐겨찾기에 등록된 항목입니다.');
-                return;
-            }
-
+            if (favorites.some(f => f.id === id)) { alert('이미 즐겨찾기에 등록된 항목입니다.'); return; }
             favorites.push({ id, region, univ, course, dept, cert, subj });
-            saveFavorites();
+            saveFavoritesToFirebase();
         }
 
-        function removeFavorite(id) {
-            favorites = favorites.filter(f => f.id !== id);
-            saveFavorites();
-        }
-
+        function removeFavorite(id) { favorites = favorites.filter(f => f.id !== id); saveFavoritesToFirebase(); }
         function deleteSelectedFavorites() {
             const checkedBoxes = document.querySelectorAll('.fav-cb:checked');
-            if (checkedBoxes.length === 0) {
-                alert('삭제할 즐겨찾기 항목을 선택해주세요.');
-                return;
-            }
-            if (!confirm(`선택한 ${checkedBoxes.length}개 항목을 즐겨찾기에서 삭제하시겠습니까?`)) return;
-
+            if (checkedBoxes.length === 0) return alert('삭제할 항목을 선택해주세요.');
+            if (!confirm('선택한 항목을 즐겨찾기에서 삭제하시겠습니까?')) return;
             const idsToDelete = Array.from(checkedBoxes).map(cb => cb.value);
             favorites = favorites.filter(f => !idsToDelete.includes(f.id));
-            saveFavorites();
+            saveFavoritesToFirebase();
         }
-
-        function clearAllFavorites() {
-            if (favorites.length === 0) {
-                alert('삭제할 즐겨찾기 항목이 없습니다.');
-                return;
-            }
-            if (!confirm('즐겨찾기 항목을 모두 삭제하시겠습니까?')) return;
-
-            favorites = [];
-            saveFavorites();
-        }
-
-        function toggleSelectAllFavs(isChecked) {
-            document.querySelectorAll('.fav-cb').forEach(cb => cb.checked = isChecked);
-        }
-
+        function clearAllFavorites() { if (favorites.length === 0) return; if (!confirm('모두 삭제하시겠습니까?')) return; favorites = []; saveFavoritesToFirebase(); }
+        function toggleSelectAllFavs(isChecked) { document.querySelectorAll('.fav-cb').forEach(cb => cb.checked = isChecked); }
         function updateFavSelectAllStatus() {
-            const checkboxes = document.querySelectorAll('.fav-cb');
-            const checkedBoxes = document.querySelectorAll('.fav-cb:checked');
-            const selectAllCb = document.getElementById('favSelectAll');
-            if (selectAllCb) {
-                selectAllCb.checked = checkboxes.length > 0 && checkboxes.length === checkedBoxes.length;
-            }
+            const len = document.querySelectorAll('.fav-cb').length;
+            const chkLen = document.querySelectorAll('.fav-cb:checked').length;
+            document.getElementById('favSelectAll').checked = len > 0 && len === chkLen;
         }
 
-        // --- 안전한 즐겨찾기 렌더링 함수 ---
         function renderFavorites() {
-            const favCountEl = document.getElementById('favCount');
-            const favContainer = document.getElementById('favList');
+            document.getElementById('favCount').innerText = favorites.length;
+            document.getElementById('favSelectAll').checked = false;
+            const container = document.getElementById('favList');
+            container.innerHTML = favorites.length === 0 ? `<div class="empty-fav">왼쪽 리스트에서 [★ 등록] 버튼을 눌러보세요.<br><br>파일을 열면 실시간 클라우드 DB에서 항상 최신 목록을 자동으로 가져옵니다.</div>` : '';
             
-            if (favCountEl) {
-                favCountEl.innerText = favorites.length;
-            }
-            
-            const selectAllCb = document.getElementById('favSelectAll');
-            if (selectAllCb) selectAllCb.checked = false;
-
-            if (!favContainer) return;
-
-            favContainer.innerHTML = '';
-
-            if (favorites.length === 0) {
-                favContainer.innerHTML = `<div class="empty-fav">즐겨찾기 항목이 없습니다.<br>원하는 항목의 [★ 등록] 버튼을 눌러보세요.</div>`;
-                return;
-            }
-
             favorites.forEach(item => {
-                const portalLink = `https://search.naver.com/search.naver?query=${encodeURIComponent(item.univ + ' 입학처')}`;
-                const card = document.createElement('div');
-                card.className = 'fav-card';
-                
-                const regionBadge = item.region ? `<span class="tag-region">${item.region}</span> ` : '';
-                const courseBadge = item.course ? `<span class="tag-course">${item.course}</span> ` : '';
-
+                const card = document.createElement('div'); card.className = 'fav-card';
                 card.innerHTML = `
                     <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <h4>
-                            <input type="checkbox" class="fav-cb" value="${item.id}" onchange="updateFavSelectAllStatus()">
-                            ${regionBadge}${item.univ}
-                        </h4>
+                        <h4><input type="checkbox" class="fav-cb" value="${item.id}" onchange="updateFavSelectAllStatus()"> <span class="tag-region">${item.region || ''}</span> ${item.univ}</h4>
                         <button class="btn-del" onclick="removeFavorite('${item.id}')">삭제</button>
                     </div>
-                    <p style="margin-top: 4px;">${courseBadge}<strong>학과:</strong> ${item.dept || '-'}</p>
+                    <p style="margin-top: 4px;"><span class="tag-course">${item.course || ''}</span> <strong>학과:</strong> ${item.dept || '-'}</p>
                     <p><strong>자격/과목:</strong> ${item.cert || '-'} ${item.subj ? `(${item.subj})` : ''}</p>
-                    <div class="fav-actions">
-                        <a href="${portalLink}" target="_blank" rel="noopener noreferrer" class="btn-link">🔗 입학처 이동</a>
-                    </div>
                 `;
-                favContainer.appendChild(card);
+                container.appendChild(card);
             });
         }
     </script>
