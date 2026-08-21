@@ -757,8 +757,8 @@
     <div class="save-indicator" id="save-indicator">💾 변경사항 구글 서버 저장 완료</div>
 
     <script>
-    // 🔗 제공해주신 Google Apps Script 웹 앱 배포 URL 주소 연동
-    const GOOGLE_WEB_APP_URL = "https://script.google.com/macros/s/AKfycby7vvlJ1-JUeAgM-0wzKg6qoVr3FRXqOwcOAmLRsc176DlgNHNCn1eTr4aTrx-54_Vb/exec";
+    // 🔗 새로 제공해주신 Google Apps Script 웹 앱 배포 URL 주소 연동[cite: 5]
+    const GOOGLE_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwDjhQjQMmpxn0uG9_LHQs1dYkDkQfGEdUx3Q7Mfd4A57gh-7uW9xSWIBepnIhJC8oX/exec";
     
     const TOTAL_TASKS = 18;
     let chatData = { 1: [], 2: [], 3: [], 4: [], 5: [] };
@@ -777,7 +777,7 @@
         saveState();
     }
 
-    // 💾 1. 체크박스 상태 구글 웹 앱 서버에 실시간 저장
+    // 💾 1. 체크박스 상태 구글 서버 실시간 저장 (CORS 우회를 위해 headers를 text/plain으로 최적화)
     async function saveState() {
         const state = {};
         for (let i = 1; i <= TOTAL_TASKS; i++) {
@@ -788,7 +788,6 @@
         try {
             await fetch(GOOGLE_WEB_APP_URL, {
                 method: 'POST',
-                mode: 'no-cors',
                 headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                 body: JSON.stringify({ action: 'saveTasks', data: state })
             });
@@ -838,14 +837,13 @@
         }
     }
 
-    // 💾 2. 메모 대화 및 첨부파일 내역 구글 웹 앱 서버에 실시간 저장
+    // 💾 2. 메모 대화 및 첨부파일 내역 구글 서버 실시간 저장
     async function saveAndRenderChats(phaseNum) {
         renderChats(phaseNum);
         
         try {
             await fetch(GOOGLE_WEB_APP_URL, {
-                method: 'POST',
-                mode: 'no-cors', 
+                method: 'POST', 
                 headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                 body: JSON.stringify({ action: 'saveChats', data: chatData })
             });
@@ -905,7 +903,7 @@
         return `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`;
     }
 
-    // 📥 3. 페이지가 로드될 때 구글 웹 앱 서버로부터 데이터 동기화 및 복원
+    // 📥 3. 페이지 로드 시 구글 서버로부터 데이터를 동기화하여 화면에 로드 및 복원
     async function loadSavedData() {
         try {
             const cacheBusterUrl = `${GOOGLE_WEB_APP_URL}?_=${new Date().getTime()}`;
@@ -914,7 +912,7 @@
             if (response.ok) {
                 const result = await response.json();
                 
-                // 체크박스 복원
+                // 체크박스 데이터 복원
                 const taskState = result.tasks || {};
                 for (let i = 1; i <= TOTAL_TASKS; i++) {
                     const checkbox = document.getElementById('task-' + i);
@@ -923,14 +921,14 @@
                     }
                 }
                 
-                // 메모 대화 내역 복원
+                // 메모 대화 데이터 복원
                 chatData = result.chats || { 1: [], 2: [], 3: [], 4: [], 5: [] };
             }
         } catch (err) {
-            console.error('구글 서버 데이터 동기화 불러오기 실패:', err);
+            console.error('구글 서버 데이터 동기화 로드 실패:', err);
         }
 
-        // 전체 화면 UI 다시 그리기 및 프로그레스 갱신
+        // 전체 화면 UI 재렌더링 및 프로그레스 바 동기화
         for (let i = 1; i <= 5; i++) {
             if(!chatData[i]) chatData[i] = [];
             renderChats(i);
